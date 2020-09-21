@@ -1,4 +1,4 @@
-This is example react/redux application. Demonstrates how react/redux can be used to build single page application. RzJS is used as well.
+This is example react/redux application. Demonstrates how react/redux can be used to build single page application.
 
 It uses [Material UI](https://material-ui.com/) for UI components
 
