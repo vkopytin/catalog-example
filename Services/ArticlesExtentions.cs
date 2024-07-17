@@ -17,4 +17,24 @@ public static class ArticlesExtentions
       Media: record.Media?.ToModel()
     );
   }
+
+  public static ArticleRecord ToRecord(this ArticleModel model)
+  {
+    return new()
+    {
+      Id = model.Id,
+      Title = model.Title,
+      Description = model.Description,
+      Origin = model.Origin,
+      MediaId = model.MediaId
+    };
+  }
+
+  public static void Assign(this ArticleRecord record, ArticleModel model)
+  {
+    record.Title = model.Title;
+    record.Description = model.Description;
+    record.Origin = model.Origin;
+    record.MediaId = model.MediaId;
+  }
 }
