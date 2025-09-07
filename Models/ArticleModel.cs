@@ -8,5 +8,6 @@ public record ArticleModel
   DateTime CreatedAt,
   int MediaId,
   string? Origin,
-  ArticleBlockModel? Media
+  ArticleBlockModel? Media,
+  ArticleBlockModel[] Blocks
 );

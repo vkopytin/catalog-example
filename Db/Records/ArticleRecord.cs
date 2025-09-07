@@ -20,4 +20,7 @@ public class ArticleRecord : BaseEntity<Guid>
   public int MediaId { get; set; }
   [ForeignKey("MediaId")]
   public ArticleBlockRecord? Media { get; set; }
+
+  [InverseProperty("Article")]
+  public ICollection<ArticleBlockRecord> Blocks { get; } = [];
 }

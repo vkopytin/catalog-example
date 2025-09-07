@@ -33,5 +33,7 @@ public class MongoDbContext : DbContext
     modelBuilder.Entity<WebSiteArticleRecord>().ToCollection("webSiteArticles");
 
     modelBuilder.Entity<ArticleRecord>().HasOne(a => a.Media);
+    modelBuilder.Entity<ArticleRecord>().HasMany(a => a.Blocks).WithOne(b => b.Article).HasForeignKey(b => b.ArticleId);
+    modelBuilder.Entity<ArticleBlockRecord>().HasOne(b => b.Article);
   }
 }
