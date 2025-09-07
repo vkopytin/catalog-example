@@ -16,4 +16,11 @@ public static class ArticleBlockExtentions
       FileName: record.FileName
     );
   }
+
+  public static void Assign(this ArticleBlockRecord record, ArticleBlockModel model)
+  {
+    record.Title = model.Title;
+    record.Description = model.Description;
+    record.Origin = model.Origin;
+  }
 }
