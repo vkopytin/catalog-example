@@ -34,7 +34,7 @@ public class ArticleBlocksController : ControllerBase
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpPut]
   [ActionName("{id}")]
-  public async Task<IActionResult> UpdateArticleBlock([FromRoute] Guid id, [FromBody] Models.ArticleBlockModel block)
+  public async Task<IActionResult> UpdateArticleBlock([FromRoute] int id, [FromBody] Models.ArticleBlockModel block)
   {
     var (updatedBlock, err) = await articleBlocks.UpdateArticleBlock(id, block);
 

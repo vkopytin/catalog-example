@@ -29,7 +29,7 @@ public class ArticleBlocksService : IArticleBlocksService
     );
   }
 
-  public async Task<(ArticleBlockModel? block, ServiceError? err)> UpdateArticleBlock(Guid id, ArticleBlockModel block)
+  public async Task<(ArticleBlockModel? block, ServiceError? err)> UpdateArticleBlock(int id, ArticleBlockModel block)
   {
     if (block is null)
     {

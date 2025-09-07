@@ -6,5 +6,5 @@ namespace Services;
 public interface IArticleBlocksService
 {
   Task<(ArticleBlockModel[]? articles, ServiceError? err)> ListArticleBlocks(int from = 0, int limit = 20);
-  Task<(ArticleBlockModel? block, ServiceError? err)> UpdateArticleBlock(Guid id, ArticleBlockModel block);
+  Task<(ArticleBlockModel? block, ServiceError? err)> UpdateArticleBlock(int id, ArticleBlockModel block);
 }
