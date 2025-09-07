@@ -7,5 +7,7 @@ public record ArticleBlockModel
   string? Description,
   string? Origin,
   string? SourceUrl,
-  string? FileName
+  string? FileName,
+  int? MediaId,
+  ArticleBlockModel? Media
 );
