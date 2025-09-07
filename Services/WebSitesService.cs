@@ -16,21 +16,28 @@ public class WebSitesService : IWebSitesService
     this.dbContext = dbContext;
     this.logger = logger;
   }
-  public async Task<(WebSiteModel[]? articles, ServiceError? err)> ListWebSites(int from = 0, int limit = 20)
+  public Task<(WebSiteModel[]? articles, ServiceError? err)> ListWebSites(int from = 0, int limit = 20)
   {
     try
     {
-      var webSites = await dbContext.WebSites
-        .OrderByDescending(a => a.CreatedAt)
-        .Skip(from).Take(limit)
-        .ToArrayAsync();
+      var query = from sites in dbContext.WebSites.AsEnumerable()
+                  join parent in dbContext.WebSites on sites.ParentId equals parent.Id into parents
+                  from sub in parents.DefaultIfEmpty()
+                  orderby sites.CreatedAt descending
+                  select sites;
 
-      return (webSites.Select(s => s.ToModel()).ToArray(), null);
+      var webSites = query.Skip(from).Take(limit).ToArray();
+
+      return Task.FromResult<(WebSiteModel[]? articles, ServiceError? err)>(
+        (webSites.Select(s => s.ToModel()).ToArray(), null)
+      );
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error, listing webSites");
-      return (null, new(Message: ex.Message));
+      return Task.FromResult<(WebSiteModel[]? articles, ServiceError? err)>(
+        (null, new(Message: ex.Message))
+      );
     }
   }
 }

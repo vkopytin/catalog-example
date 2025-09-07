@@ -13,7 +13,8 @@ public static class WebSitesExtentions
       CreatedAt: webSite.CreatedAt,
       Name: webSite.Name ?? string.Empty,
       HostName: webSite.HostName ?? string.Empty,
-      AltHostName: webSite.AltHostName ?? string.Empty
+      AltHostName: webSite.AltHostName ?? string.Empty,
+      Parent: webSite.Parent?.ToModel()
     );
   }
 }

@@ -6,5 +6,6 @@ public record WebSiteModel(
   DateTime CreatedAt,
   string Name,
   string HostName,
-  string AltHostName
+  string AltHostName,
+  WebSiteModel? Parent
 );
