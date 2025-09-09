@@ -5,6 +5,8 @@ using MongoDB.Driver.Linq;
 
 namespace Services;
 
+using static Consts.Consts;
+
 public class ArticlesService : IArticlesService
 {
   private readonly MongoDbContext dbContext;
@@ -14,7 +16,7 @@ public class ArticlesService : IArticlesService
     this.dbContext = dbContext;
   }
 
-  public Task<(ArticleModel[]? articles, ServiceError? err)> ListArticles(int from = 0, int limit = 20)
+  public async Task<(ArticleModel[]? articles, ServiceError? err)> ListArticles(int from = 0, int limit = 20)
   {
     var query
     = from a in dbContext.Articles.AsEnumerable()
@@ -22,11 +24,13 @@ public class ArticlesService : IArticlesService
       from sub in mleft.DefaultIfEmpty()
       orderby a.CreatedAt descending
       select a;
-    var articles = query.Skip(from).Take(limit).ToArray();
+    var articles = await Task.WhenAll(query.Skip(from).Take(limit).Select(async m =>
+    {
+      await Task.Delay(ASYNC_GLOBAL_DELAY);
+      return m.ToModel();
+    }).ToArray());
 
-    return Task.FromResult<(ArticleModel[]?, ServiceError?)>(
-      (articles.Select(a => a.ToModel()).ToArray(), null)
-    );
+    return (articles, null);
   }
 
   public async Task<(ArticleModel? article, ServiceError? err)> GetArticle(Guid id)

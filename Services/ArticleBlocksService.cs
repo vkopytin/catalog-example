@@ -5,6 +5,8 @@ using MongoDB.Driver.Linq;
 
 namespace Services;
 
+using static Consts.Consts;
+
 public class ArticleBlocksService : IArticleBlocksService
 {
   private readonly MongoDbContext dbContext;
@@ -14,7 +16,7 @@ public class ArticleBlocksService : IArticleBlocksService
     this.dbContext = dbContext;
   }
 
-  public Task<(ArticleBlockModel[]? articles, ServiceError? err)> ListArticleBlocks(int from = 0, int limit = 20)
+  public async Task<(ArticleBlockModel[]? articles, ServiceError? err)> ListArticleBlocks(int from = 0, int limit = 20)
   {
     var query
     = from b in dbContext.ArticleBlocks.AsEnumerable()
@@ -22,11 +24,13 @@ public class ArticleBlocksService : IArticleBlocksService
       from sub in media.DefaultIfEmpty()
       orderby b.CreatedAt descending
       select b;
-    var blocks = query.Skip(from).Take(limit).ToArray();
+    var blocks = await Task.WhenAll(query.Skip(from).Take(limit).Select(async a =>
+    {
+      await Task.Delay(ASYNC_GLOBAL_DELAY);
+      return a.ToModel();
+    }).ToArray());
 
-    return Task.FromResult<(ArticleBlockModel[]?, ServiceError?)>(
-      (blocks.Select(a => a.ToModel()).ToArray(), null)
-    );
+    return (blocks, null);
   }
 
   public async Task<(ArticleBlockModel? block, ServiceError? err)> UpdateArticleBlock(int id, ArticleBlockModel block)

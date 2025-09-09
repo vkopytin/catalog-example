@@ -1,10 +1,11 @@
 using Db;
 using Errors;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Models;
 
 namespace Services;
+
+using static Consts.Consts;
 
 public class WebSitesService : IWebSitesService
 {
@@ -16,7 +17,7 @@ public class WebSitesService : IWebSitesService
     this.dbContext = dbContext;
     this.logger = logger;
   }
-  public Task<(WebSiteModel[]? articles, ServiceError? err)> ListWebSites(int from = 0, int limit = 20)
+  public async Task<(WebSiteModel[]? articles, ServiceError? err)> ListWebSites(int from = 0, int limit = 20)
   {
     try
     {
@@ -26,18 +27,18 @@ public class WebSitesService : IWebSitesService
                   orderby sites.CreatedAt descending
                   select sites;
 
-      var webSites = query.Skip(from).Take(limit).ToArray();
+      var webSites = await Task.WhenAll(query.Skip(from).Take(limit).Select(async s =>
+      {
+        await Task.Delay(ASYNC_GLOBAL_DELAY);
+        return s.ToModel();
+      }).ToArray());
 
-      return Task.FromResult<(WebSiteModel[]? articles, ServiceError? err)>(
-        (webSites.Select(s => s.ToModel()).ToArray(), null)
-      );
+      return (webSites, null);
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Error, listing webSites");
-      return Task.FromResult<(WebSiteModel[]? articles, ServiceError? err)>(
-        (null, new(Message: ex.Message))
-      );
+      return (null, new(Message: ex.Message));
     }
   }
 }
