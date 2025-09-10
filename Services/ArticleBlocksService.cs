@@ -24,11 +24,7 @@ public class ArticleBlocksService : IArticleBlocksService
       from sub in media.DefaultIfEmpty()
       orderby b.CreatedAt descending
       select b;
-    var blocks = await Task.WhenAll(query.Skip(from).Take(limit).Select(async a =>
-    {
-      await Task.Delay(ASYNC_GLOBAL_DELAY);
-      return a.ToModel();
-    }).ToArray());
+    var blocks = query.Skip(from).Take(limit).Select(a => a.ToModel()).ToArray();
 
     return (blocks, null);
   }

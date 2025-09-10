@@ -27,11 +27,7 @@ public class WebSitesService : IWebSitesService
                   orderby sites.CreatedAt descending
                   select sites;
 
-      var webSites = await Task.WhenAll(query.Skip(from).Take(limit).Select(async s =>
-      {
-        await Task.Delay(ASYNC_GLOBAL_DELAY);
-        return s.ToModel();
-      }).ToArray());
+      var webSites = query.Skip(from).Take(limit).Select(s => s.ToModel()).ToArray();
 
       return (webSites, null);
     }

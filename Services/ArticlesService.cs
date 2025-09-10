@@ -24,11 +24,7 @@ public class ArticlesService : IArticlesService
       from sub in mleft.DefaultIfEmpty()
       orderby a.CreatedAt descending
       select a;
-    var articles = await Task.WhenAll(query.Skip(from).Take(limit).Select(async m =>
-    {
-      await Task.Delay(ASYNC_GLOBAL_DELAY);
-      return m.ToModel();
-    }).ToArray());
+    var articles = query.Skip(from).Take(limit).Select(m => m.ToModel()).ToArray();
 
     return (articles, null);
   }
