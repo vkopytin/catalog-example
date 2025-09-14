@@ -24,6 +24,7 @@ public class MongoDbContext : DbContext
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     base.OnModelCreating(modelBuilder);
+
     modelBuilder.Entity<CategoryRecord>().ToCollection("categories");
     modelBuilder.Entity<UserRecord>().ToCollection("users");
     modelBuilder.Entity<ClientRecord>().ToCollection("authClients");

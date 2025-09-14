@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Models;
 using Services;
 
 IdentityModelEventSource.ShowPII = true;
@@ -36,6 +38,9 @@ builder.Services.AddCors(options =>
       ;
   });
 });
+builder.Services.AddSingleton(p => p.GetRequiredService<IConfiguration>().GetSection("JobsOnDemand")
+  .Get<JobsOnDemand>() ?? throw new Exception("appsetings missing JobsOnDemand section")
+);
 var client = builder.Configuration.CreateMongoClient("MongoDBConnection");
 builder.Services.AddTransient(o =>
 {
@@ -45,6 +50,7 @@ builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<IArticlesService, ArticlesService>();
 builder.Services.AddTransient<IArticleBlocksService, ArticleBlocksService>();
 builder.Services.AddTransient<IWebSitesService, WebSitesService>();
+builder.Services.AddTransient<IMediaLibraryService, MediaLibraryService>();
 builder.Services.AddHttpClient<IdmAccessTokenAuthSchemeHandler>();
 builder.Services.AddControllers();
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
