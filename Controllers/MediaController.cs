@@ -9,7 +9,7 @@ using Services;
 
 namespace Controllers;
 
-[Route("[controller]/[action]")]
+[Route("[controller]/[action]/{id?}")]
 [ApiController]
 public class MediaController : ControllerBase
 {
@@ -24,13 +24,13 @@ public class MediaController : ControllerBase
     this.mediaLibrary = mediaLibrary;
   }
 
-  [HttpPost]
-  [ActionName("upload")]
-  public async Task<IActionResult> Upload(IFormCollection formData)
+  [HttpPost("upload")]
+  [ActionName("block")]
+  public async Task<IActionResult> BlockUpload([FromRoute(Name = "id")] int blockId, IFormCollection formData)
   {
     var file = formData.Files[0];
     using Stream m = file.OpenReadStream();
-    var (res, error) = await this.mediaLibrary.Create(m, file.ContentType, file.FileName);
+    var (res, error) = await this.mediaLibrary.Create(blockId, m, file.ContentType, file.FileName);
     if (res is null)
     {
       return BadRequest(new { Error = error?.Message });

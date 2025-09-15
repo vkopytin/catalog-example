@@ -13,7 +13,7 @@ public class ArticleBlockRecord : BaseEntity<int>
   public DateTime UpdatedAt { get; set; }
 
   #region Navigation Properties
-  public Guid ArticleId { get; set; }
+  public Guid? ArticleId { get; set; }
 
   [ForeignKey("ArticleId")]
   public ArticleRecord? Article { get; set; }
@@ -21,7 +21,7 @@ public class ArticleBlockRecord : BaseEntity<int>
   #endregion
 
   #region Media Info
-  public int MediaId { get; set; }
+  public int? MediaId { get; set; }
   [ForeignKey("MediaId")]
   public ArticleBlockRecord? Media { get; set; }
   public int? Width { get; set; }

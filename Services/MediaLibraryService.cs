@@ -18,8 +18,13 @@ public class MediaLibraryService : IMediaLibraryService
     this.dbContext = dbContext;
   }
 
-  public async Task<(ArticleBlockModel?, ServiceError?)> Create(Stream stream, string contentType, string fileName)
+  public async Task<(ArticleBlockModel?, ServiceError?)> Create(int blockId, Stream stream, string contentType, string fileName)
   {
+    var existing = this.dbContext.ArticleBlocks.Find(blockId);
+    if (existing is null)
+    {
+      return (null, new ServiceError("Can't find block to update"));
+    }
     var (imgBB, error) = await this.CreateImageBB(stream, contentType, fileName);
     if (imgBB is null)
     {
@@ -35,33 +40,36 @@ public class MediaLibraryService : IMediaLibraryService
      from block in this.dbContext.ArticleBlocks.AsEnumerable()
      select block;
 
-    var media = items.Where(a => a.SourceUrl == imgBB.Data.Url).Select(b => b.ToModel()).FirstOrDefault();
+    var media = existing.MediaId is null ? items.Where(a => a.SourceUrl == imgBB.Data.Url).FirstOrDefault()
+      : items.Where(a => a.Id == existing.MediaId).FirstOrDefault();
 
-    if (media is not null)
-    {
-      return (media, null);
-    }
-
-    var lastRecord = this.dbContext.ArticleBlocks.Select(b => b.Id).Max();
-
-    var record = new ArticleBlockRecord
-    {
-      Id = lastRecord + 1,
-      SourceUrl = imgBB.Data.Url
-    };
-    var res = await this.dbContext.ArticleBlocks.AddAsync(record);
-    await this.dbContext.SaveChangesAsync();
-
-    record = this.dbContext.ArticleBlocks.Find(res.Entity.Id);
+    var record = media;
     if (record is null)
     {
-      return (null, new ServiceError($"Create error. No article block with the id ({res.Entity.Id}) was found"));
-    }
+      var lastRecord = this.dbContext.ArticleBlocks.Select(b => b.Id).Max();
 
-    return (record.ToModel(), null);
+      record = new ArticleBlockRecord
+      {
+        Id = lastRecord + 1,
+        SourceUrl = imgBB.Data.Url
+      };
+      var res = await this.dbContext.ArticleBlocks.AddAsync(record);
+      record = res.Entity;
+      existing.MediaId = record.Id;
+      this.dbContext.ArticleBlocks.Update(existing);
+    }
+    else
+    {
+      record.SourceUrl = imgBB.Data.Url;
+
+      this.dbContext.ArticleBlocks.Update(record);
+    }
+    await this.dbContext.SaveChangesAsync();
+
+    return (existing.ToModel(), null);
   }
 
-  private async Task<(ImgBBUploadResult?, string? error)> CreateImageBB(Stream stream, string title, string fileName)
+  private async Task<(ImgBBUploadResult?, string? error)> CreateImageBB(Stream stream, string contentType, string fileName)
   {
     using var httpClient = new HttpClient();
     using MultipartFormDataContent multipartFormData = [];
@@ -70,7 +78,7 @@ public class MediaLibraryService : IMediaLibraryService
     httpClient.BaseAddress = new Uri("https://api.imgbb.com");
     multipartFormData.Add(new StreamContent(base64Stream), "image");
     multipartFormData.Add(new StringContent("74e2ce10556318a587dadc06e5171c94"), "key");
-    multipartFormData.Add(new StringContent("description"), title);
+    multipartFormData.Add(new StringContent("description"), contentType);
     HttpResponseMessage httpResult = await httpClient.PostAsync($"/1/upload?name=image", multipartFormData);
 
     if (httpResult.IsSuccessStatusCode)
