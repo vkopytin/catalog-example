@@ -14,7 +14,9 @@ public static class ArticleBlockExtentions
       Origin: record.Origin,
       SourceUrl: record.SourceUrl,
       FileName: record.FileName,
-      MediaId: record.MediaId == 0 ? null : record.MediaId,
+      ParentId: record.ParentId == 0 ? null : record.ParentId,
+      Width: record.Width,
+      Height: record.Height,
       Media: record.Media?.ToModel()
     );
   }

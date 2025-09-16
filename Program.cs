@@ -41,6 +41,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton(p => p.GetRequiredService<IConfiguration>().GetSection("JobsOnDemand")
   .Get<JobsOnDemand>() ?? throw new Exception("appsetings missing JobsOnDemand section")
 );
+builder.Services.AddSingleton(p => p.GetRequiredService<IConfiguration>().GetSection("ImgBB")
+  .Get<ImgBBConfig>() ?? new ImgBBConfig("", "")
+);
 var client = builder.Configuration.CreateMongoClient("MongoDBConnection");
 builder.Services.AddTransient(o =>
 {

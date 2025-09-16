@@ -12,10 +12,12 @@ namespace Services;
 public class MediaLibraryService : IMediaLibraryService
 {
   private readonly MongoDbContext dbContext;
+  private readonly ImgBBConfig imgBB;
 
-  public MediaLibraryService(MongoDbContext dbContext)
+  public MediaLibraryService(MongoDbContext dbContext, ImgBBConfig imgBB)
   {
     this.dbContext = dbContext;
+    this.imgBB = imgBB;
   }
 
   public async Task<(ArticleBlockModel?, ServiceError?)> Create(int blockId, Stream stream, string contentType, string fileName)
@@ -40,8 +42,7 @@ public class MediaLibraryService : IMediaLibraryService
      from block in this.dbContext.ArticleBlocks.AsEnumerable()
      select block;
 
-    var media = existing.MediaId is null ? items.Where(a => a.SourceUrl == imgBB.Data.Url).FirstOrDefault()
-      : items.Where(a => a.Id == existing.MediaId).FirstOrDefault();
+    var media = items.Where(a => a.ParentId == existing.Id).FirstOrDefault();
 
     var record = media;
     if (record is null)
@@ -51,16 +52,19 @@ public class MediaLibraryService : IMediaLibraryService
       record = new ArticleBlockRecord
       {
         Id = lastRecord + 1,
-        SourceUrl = imgBB.Data.Url
+        ParentId = existing.Id,
+        SourceUrl = imgBB.Data.Url,
+        Width = imgBB.Data.Width,
+        Height = imgBB.Data.Height,
       };
       var res = await this.dbContext.ArticleBlocks.AddAsync(record);
       record = res.Entity;
-      existing.MediaId = record.Id;
-      this.dbContext.ArticleBlocks.Update(existing);
     }
     else
     {
       record.SourceUrl = imgBB.Data.Url;
+      record.Width = imgBB.Data.Width;
+      record.Height = imgBB.Data.Height;
 
       this.dbContext.ArticleBlocks.Update(record);
     }
@@ -75,9 +79,9 @@ public class MediaLibraryService : IMediaLibraryService
     using MultipartFormDataContent multipartFormData = [];
     using var base64Stream = new CryptoStream(stream, new ToBase64Transform(), CryptoStreamMode.Read);
 
-    httpClient.BaseAddress = new Uri("https://api.imgbb.com");
+    httpClient.BaseAddress = new Uri(this.imgBB.BaseAddress);
     multipartFormData.Add(new StreamContent(base64Stream), "image");
-    multipartFormData.Add(new StringContent("74e2ce10556318a587dadc06e5171c94"), "key");
+    multipartFormData.Add(new StringContent(imgBB.Key), "key");
     multipartFormData.Add(new StringContent("description"), contentType);
     HttpResponseMessage httpResult = await httpClient.PostAsync($"/1/upload?name=image", multipartFormData);
 

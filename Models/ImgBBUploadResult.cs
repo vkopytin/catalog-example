@@ -35,6 +35,10 @@ public class ImgBBImageInfo
   public string? Url { get; set; }
   [JsonPropertyName("size")]
   public int Size { get; set; }
+  [JsonPropertyName("width")]
+  public int Width { get; set; }
+  [JsonPropertyName("height")]
+  public int Height { get; set; }
   [JsonPropertyName("time")]
   public long Time { get; set; }
   [JsonPropertyName("expiration")]

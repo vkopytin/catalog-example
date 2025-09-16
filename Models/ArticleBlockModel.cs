@@ -8,6 +8,8 @@ public record ArticleBlockModel
   string? Origin,
   string? SourceUrl,
   string? FileName,
-  int? MediaId,
+  int? ParentId,
+  int? Width,
+  int? Height,
   ArticleBlockModel? Media
 );
