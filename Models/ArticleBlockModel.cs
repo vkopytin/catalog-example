@@ -12,5 +12,4 @@ public record ArticleBlockModel
   int? Width,
   int? Height,
   ArticleBlockModel? Media
-//ICollection<ArticleBlockModel> Blocks
 );

@@ -18,7 +18,6 @@ public static class ArticleBlockExtentions
       Width: record.Width,
       Height: record.Height,
       Media: record.Media?.ToModel()
-    //Blocks: [.. record.Blocks.Select(b => b.ToModel())]
     );
   }
 

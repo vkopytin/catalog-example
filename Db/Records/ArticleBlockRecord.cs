@@ -24,8 +24,6 @@ public class ArticleBlockRecord : BaseEntity<int>
   public int? MediaId { get; set; }
   [ForeignKey("MediaId")]
   public ArticleBlockRecord? Media { get; set; }
-  [InverseProperty("Media")]
-  //public ICollection<ArticleBlockRecord> Blocks { get; set; } = [];
   public int? Width { get; set; }
   public int? Height { get; set; }
   public string? SourceUrl { get; set; }

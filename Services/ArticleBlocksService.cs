@@ -20,8 +20,6 @@ public class ArticleBlocksService : IArticleBlocksService
   {
     var query
     = from b in dbContext.ArticleBlocks.AsEnumerable()
-      join m in dbContext.ArticleBlocks on b.Id equals m.MediaId into media
-      from sub in media.DefaultIfEmpty()
       orderby b.CreatedAt descending
       select b;
     var blocks = query.Skip(from).Take(limit).Select(a => a.ToModel()).ToArray();
