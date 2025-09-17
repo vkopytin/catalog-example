@@ -9,5 +9,5 @@ public record ArticleModel
   int MediaId,
   string? Origin,
   ArticleBlockModel? Media,
-  ArticleBlockModel[] Blocks
+  ICollection<ArticleBlockModel> Blocks
 );

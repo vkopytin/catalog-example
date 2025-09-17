@@ -33,41 +33,17 @@ public class MediaLibraryService : IMediaLibraryService
       return (null, new ServiceError(error));
     }
 
-    if (imgBB is null || imgBB.Data is null)
+    if (imgBB.Data is null)
     {
       return (null, new ServiceError("Starange error"));
     }
 
-    var items =
-     from block in this.dbContext.ArticleBlocks.AsEnumerable()
-     select block;
+    existing.SourceUrl = imgBB.Data.Url;
+    existing.Width = imgBB.Data.Width;
+    existing.Height = imgBB.Data.Height;
 
-    var media = items.Where(a => a.ParentId == existing.Id).FirstOrDefault();
+    this.dbContext.ArticleBlocks.Update(existing);
 
-    var record = media;
-    if (record is null)
-    {
-      var lastRecord = this.dbContext.ArticleBlocks.Select(b => b.Id).Max();
-
-      record = new ArticleBlockRecord
-      {
-        Id = lastRecord + 1,
-        ParentId = existing.Id,
-        SourceUrl = imgBB.Data.Url,
-        Width = imgBB.Data.Width,
-        Height = imgBB.Data.Height,
-      };
-      var res = await this.dbContext.ArticleBlocks.AddAsync(record);
-      record = res.Entity;
-    }
-    else
-    {
-      record.SourceUrl = imgBB.Data.Url;
-      record.Width = imgBB.Data.Width;
-      record.Height = imgBB.Data.Height;
-
-      this.dbContext.ArticleBlocks.Update(record);
-    }
     await this.dbContext.SaveChangesAsync();
 
     return (existing.ToModel(), null);

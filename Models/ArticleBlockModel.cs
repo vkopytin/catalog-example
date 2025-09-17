@@ -8,8 +8,9 @@ public record ArticleBlockModel
   string? Origin,
   string? SourceUrl,
   string? FileName,
-  int? ParentId,
+  int? MediaId,
   int? Width,
   int? Height,
   ArticleBlockModel? Media
+//ICollection<ArticleBlockModel> Blocks
 );

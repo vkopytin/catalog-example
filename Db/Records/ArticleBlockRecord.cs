@@ -20,11 +20,12 @@ public class ArticleBlockRecord : BaseEntity<int>
 
   #endregion
 
-  #region Parent Id - means this block is media
-  public int? ParentId { get; set; }
-  [ForeignKey("ParentId")]
+  #region Media Info
+  public int? MediaId { get; set; }
+  [ForeignKey("MediaId")]
   public ArticleBlockRecord? Media { get; set; }
-  public ArticleBlockRecord? Block { get; set; }
+  [InverseProperty("Media")]
+  //public ICollection<ArticleBlockRecord> Blocks { get; set; } = [];
   public int? Width { get; set; }
   public int? Height { get; set; }
   public string? SourceUrl { get; set; }
