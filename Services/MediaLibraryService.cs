@@ -38,7 +38,7 @@ public class MediaLibraryService : IMediaLibraryService
       return (null, new ServiceError("Starange error"));
     }
 
-    existing.SourceUrl = imgBB.Data.Url;
+    existing.Origin = imgBB.Data.Url;
     existing.Width = imgBB.Data.Width;
     existing.Height = imgBB.Data.Height;
 
