@@ -9,6 +9,7 @@ public record ArticleBlockModel
   string? SourceUrl,
   string? FileName,
   int? MediaId,
+  string? MediaError,
   int? Width,
   int? Height,
   ArticleBlockModel? Media

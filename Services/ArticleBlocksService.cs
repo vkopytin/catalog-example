@@ -5,8 +5,6 @@ using MongoDB.Driver.Linq;
 
 namespace Services;
 
-using static Consts.Consts;
-
 public class ArticleBlocksService : IArticleBlocksService
 {
   private readonly MongoDbContext dbContext;
@@ -18,6 +16,7 @@ public class ArticleBlocksService : IArticleBlocksService
 
   public async Task<(ArticleBlockModel[]? articles, ServiceError? err)> ListArticleBlocks(int from = 0, int limit = 20)
   {
+    await Task.Delay(1);
     var query
     = from b in dbContext.ArticleBlocks.AsEnumerable()
       orderby b.CreatedAt descending
@@ -25,6 +24,13 @@ public class ArticleBlocksService : IArticleBlocksService
     var blocks = query.Skip(from).Take(limit).Select(a => a.ToModel()).ToArray();
 
     return (blocks, null);
+  }
+
+  public async Task<(ArticleBlockModel? block, ServiceError? err)> GetArticleBlocById(int blockId)
+  {
+    var block = await dbContext.ArticleBlocks.FindAsync(blockId);
+
+    return (block?.ToModel(), null);
   }
 
   public async Task<(ArticleBlockModel? block, ServiceError? err)> UpdateArticleBlock(int id, ArticleBlockModel block)

@@ -32,6 +32,21 @@ public class ArticleBlocksController : ControllerBase
   }
 
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpGet]
+  [ActionName("{id}")]
+  public async Task<IActionResult> GetBlockById([FromRoute] int id)
+  {
+    var (block, err) = await articleBlocks.GetArticleBlocById(id);
+
+    if (block is null)
+    {
+      return NotFound(err);
+    }
+
+    return Ok(block);
+  }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpPut]
   [ActionName("{id}")]
   public async Task<IActionResult> UpdateArticleBlock([FromRoute] int id, [FromBody] Models.ArticleBlockModel block)

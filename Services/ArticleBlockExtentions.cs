@@ -15,6 +15,7 @@ public static class ArticleBlockExtentions
       SourceUrl: record.SourceUrl,
       FileName: record.FileName,
       MediaId: record.MediaId,
+      MediaError: record.MediaError,
       Width: record.Width,
       Height: record.Height,
       Media: record.Media?.ToModel()
