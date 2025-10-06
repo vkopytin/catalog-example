@@ -14,6 +14,7 @@ public class MongoDbContext : DbContext
   public DbSet<WebSiteRecord> WebSites { get; init; }
   public DbSet<CategoryRecord> Categories { get; init; }
   public DbSet<WebSiteArticleRecord> WebSiteArticles { get; init; }
+  public DbSet<AuthorizationTokenRecord> AuthTokens { get; init; }
 
   public MongoDbContext(MongoClient client)
    : base(new DbContextOptionsBuilder<MongoDbContext>().UseMongoDB(client, "main").Options)
@@ -32,6 +33,7 @@ public class MongoDbContext : DbContext
     modelBuilder.Entity<WebSiteRecord>().ToCollection("webSites");
     modelBuilder.Entity<ArticleBlockRecord>().ToCollection("articleBlocks");
     modelBuilder.Entity<WebSiteArticleRecord>().ToCollection("webSiteArticles");
+    modelBuilder.Entity<AuthorizationTokenRecord>().ToCollection("authTokens");
 
     modelBuilder.Entity<ArticleRecord>().HasOne(a => a.Media);
     modelBuilder.Entity<ArticleRecord>().HasMany(a => a.Blocks).WithOne(b => b.Article).HasForeignKey(b => b.ArticleId);
