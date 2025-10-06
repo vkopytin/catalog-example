@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Models;
 using Services;
+using Services.YoutubeApi;
 
 IdentityModelEventSource.ShowPII = true;
 
@@ -54,6 +55,8 @@ builder.Services.AddTransient<IArticlesService, ArticlesService>();
 builder.Services.AddTransient<IArticleBlocksService, ArticleBlocksService>();
 builder.Services.AddTransient<IWebSitesService, WebSitesService>();
 builder.Services.AddTransient<IMediaLibraryService, MediaLibraryService>();
+builder.Services.AddTransient<AuthorizationTokensService>();
+builder.Services.AddTransient<YoutubeApiService>();
 builder.Services.AddHttpClient<IdmAccessTokenAuthSchemeHandler>();
 builder.Services.AddControllers();
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
