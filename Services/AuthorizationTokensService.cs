@@ -1,5 +1,6 @@
 using Db;
 using Errors;
+using Microsoft.EntityFrameworkCore;
 using Models;
 using MongoDB.Driver.Linq;
 
@@ -16,7 +17,10 @@ public class AuthorizationTokensService
 
   public async Task<(string? token, ServiceError? err)> GetAccessToken(string openId)
   {
-    var tokenRecord = await dbContext.AuthTokens.FindAsync(openId);
+    var tokenRecord = await dbContext.AuthTokens
+      .OrderByDescending(a => a.CreatedAt)
+      .FirstOrDefaultAsync(t => t.SecurityGroupId == openId);
+
     if (tokenRecord is null)
     {
       return (null, new ServiceError("Token not found"));

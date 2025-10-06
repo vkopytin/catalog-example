@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.YoutubeApi;
+using Utils;
 
 namespace Controllers;
 
-[Route("youtube-api/[action]")]
+[Route("youtube-api")]
+[Route("[controller]/[action]")]
 [ApiController]
 public class YoutubeApiController : ControllerBase
 {
@@ -17,11 +19,12 @@ public class YoutubeApiController : ControllerBase
   }
 
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-  [HttpGet]
+  [HttpGet("list-channels")]
   [ActionName("list-channels")]
-  public IActionResult ListChannels()
+  public async Task<IActionResult> ListChannels()
   {
-    var (result, err) = youtubeApi.ListChannges();
+    var openId = User.GetOid();
+    var (result, err) = await youtubeApi.ListChannels(openId);
 
     if (result is null)
     {

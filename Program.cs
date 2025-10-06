@@ -110,6 +110,7 @@ builder.Services.AddAuthorization(options =>
   options.CallbackPath = "/signin-oidc";
   options.SaveTokens = true;
   options.UseSecurityTokenValidator = true;
+  options.MapInboundClaims = false;
   options.TokenValidationParameters = new TokenValidationParameters
   {
     ValidateIssuer = false,
@@ -127,6 +128,7 @@ builder.Services.AddAuthorization(options =>
   opt.Audience = builder.Configuration["JWT:Audience"];
   opt.RequireHttpsMetadata = false;
   opt.SaveToken = true;
+  opt.MapInboundClaims = false;
   opt.TokenValidationParameters = new TokenValidationParameters
   {
     //ValidAudience = builder.Configuration["JWT:Audience"],
