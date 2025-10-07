@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Db;
 using Db.Records;
 using Errors;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -8,19 +9,22 @@ namespace Services.YoutubeApi;
 
 public class YoutubeApiService
 {
+  private readonly MongoDbContext dbContext;
   private readonly HttpClient httpClient;
   private readonly AuthorizationTokensService authorizationTokensService;
 
   public YoutubeApiService(
+    MongoDbContext dbContext,
     AuthorizationTokensService authorizationTokensService,
     HttpClient httpClient
   )
   {
+    this.dbContext = dbContext;
     this.authorizationTokensService = authorizationTokensService;
     this.httpClient = httpClient;
   }
 
-  public async Task<(YoutubeChannelsResponse? result, ServiceError? error)> ListChannels(string sequrityGroupId)
+  public async Task<(YoutubeChannelResponse? result, ServiceError? error)> ListChannels(string sequrityGroupId)
   {
     var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(sequrityGroupId);
     if (token is null)
@@ -36,13 +40,54 @@ public class YoutubeApiService
 
     try
     {
-
       var channels = JsonSerializer.Deserialize<YoutubeChannelsResponse>(subscriptions, new JsonSerializerOptions
       {
         PropertyNameCaseInsensitive = true
       });
 
-      return (channels, null);
+      var res = new List<YoutubeChannelRecord>();
+
+      foreach (var channel in channels.Items)
+      {
+        var existingRecord = dbContext.YoutubeChannels.FirstOrDefault(c => c.Id == channel.Id && c.SecurityGroupId == sequrityGroupId);
+        if (existingRecord is null)
+        {
+          existingRecord = new YoutubeChannelRecord
+          {
+            Id = channel.Id,
+            ChannelId = channel.Snippet.ResourceId.ChannelId,
+            Title = channel.Snippet.Title,
+            Description = channel.Snippet.Description,
+            PublishedAt = channel.Snippet.PublishedAt,
+            ThumbnailUrl = channel.Snippet.Thumbnails?.High?.Url
+              ?? channel.Snippet.Thumbnails?.Medium?.Url
+              ?? channel.Snippet.Thumbnails?.Default?.Url
+              ?? string.Empty,
+            SecurityGroupId = sequrityGroupId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+          };
+
+          await dbContext.YoutubeChannels.AddAsync(existingRecord);
+        }
+        else
+        {
+          existingRecord.Title = channel.Snippet.Title;
+          existingRecord.Description = channel.Snippet.Description;
+          existingRecord.PublishedAt = channel.Snippet.PublishedAt;
+          existingRecord.ThumbnailUrl = channel.Snippet.Thumbnails?.High?.Url
+              ?? channel.Snippet.Thumbnails?.Medium?.Url
+              ?? channel.Snippet.Thumbnails?.Default?.Url
+              ?? string.Empty;
+          existingRecord.UpdatedAt = DateTime.UtcNow;
+
+          dbContext.YoutubeChannels.Update(existingRecord);
+        }
+
+        res.Add(existingRecord);
+      }
+
+      return (new(res), null);
     }
     catch (Exception ex)
     {
@@ -53,7 +98,8 @@ public class YoutubeApiService
 
   private async Task<(string? result, string? error)> ListYoutubeSubscriptions(string accessToken)
   {
-    const string subscriptionsUri = "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true";
+    var parts = Uri.EscapeDataString("snippet");
+    var subscriptionsUri = $"https://www.googleapis.com/youtube/v3/subscriptions?part={parts}&mine=true";
     var subscriptionsRequest = new HttpRequestMessage(HttpMethod.Get, subscriptionsUri);
     subscriptionsRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
 
@@ -67,5 +113,4 @@ public class YoutubeApiService
 
     return (subscriptionsResponseContent, null);
   }
-
 }

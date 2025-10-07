@@ -33,4 +33,14 @@ public class YoutubeApiController : ControllerBase
 
     return Ok(result);
   }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpPost("unsubscribe/{channelId}")]
+  [ActionName("unsubscribe/[channelId]")]
+  public async Task<IActionResult> Unsubscribe(string channelId)
+  {
+    await Task.Delay(1);
+
+    return Ok();
+  }
 }

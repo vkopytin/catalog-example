@@ -16,7 +16,14 @@ public record YoutubeThumbnailDetails(
   YoutubeThumbnail? High
 );
 
-public record YoutubeChannelSnippet(
+public record YoutubeResourceId(
+  [property: JsonPropertyName("kind")]
+  string Kind,
+  [property: JsonPropertyName("channelId")]
+  string ChannelId
+);
+
+public record YoutubeSubscriptionSnippet(
   [property: JsonPropertyName("channelId")]
   string ChannelId,
   [property: JsonPropertyName("title")]
@@ -25,15 +32,17 @@ public record YoutubeChannelSnippet(
   string Description,
   [property: JsonPropertyName("publishedAt")]
   DateTime PublishedAt,
+  [property: JsonPropertyName("resourceId")]
+  YoutubeResourceId ResourceId,
   [property: JsonPropertyName("thumbnails")]
   YoutubeThumbnailDetails Thumbnails
 );
 
-public record YoutubChannel(
+public record YoutubeSubscription(
   [property: JsonPropertyName("id")]
   string Id,
   [property: JsonPropertyName("snippet")]
-  YoutubeChannelSnippet Snippet
+  YoutubeSubscriptionSnippet Snippet
 );
 
 public record YoutubePageInfo(
@@ -45,7 +54,7 @@ public record YoutubePageInfo(
 
 public record YoutubeChannelsResponse(
   [property: JsonPropertyName("items")]
-  List<YoutubChannel> Items,
+  List<YoutubeSubscription> Items,
   [property: JsonPropertyName("pageInfo")]
   YoutubePageInfo PageInfo,
   [property: JsonPropertyName("nextPageToken")]
