@@ -3,6 +3,7 @@ using Db;
 using Db.Records;
 using Errors;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Models.YoutubeApi;
 
 namespace Services.YoutubeApi;
@@ -45,11 +46,15 @@ public class YoutubeApiService
         PropertyNameCaseInsensitive = true
       });
 
+      var channelsQuery = from c in dbContext.YoutubeChannels
+                          where c.SecurityGroupId == sequrityGroupId
+                          select c;
+
       var res = new List<YoutubeChannelRecord>();
 
       foreach (var channel in channels.Items)
       {
-        var existingRecord = dbContext.YoutubeChannels.FirstOrDefault(c => c.Id == channel.Id && c.SecurityGroupId == sequrityGroupId);
+        var existingRecord = await channelsQuery.FirstOrDefaultAsync(c => c.Id == channel.Id);
         if (existingRecord is null)
         {
           existingRecord = new YoutubeChannelRecord
@@ -65,7 +70,8 @@ public class YoutubeApiService
               ?? string.Empty,
             SecurityGroupId = sequrityGroupId,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            IsSubscribed = true
           };
 
           await dbContext.YoutubeChannels.AddAsync(existingRecord);
@@ -80,12 +86,15 @@ public class YoutubeApiService
               ?? channel.Snippet.Thumbnails?.Default?.Url
               ?? string.Empty;
           existingRecord.UpdatedAt = DateTime.UtcNow;
+          existingRecord.IsSubscribed = true;
 
           dbContext.YoutubeChannels.Update(existingRecord);
         }
 
         res.Add(existingRecord);
       }
+
+      await dbContext.SaveChangesAsync();
 
       return (new(res), null);
     }

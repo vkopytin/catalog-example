@@ -8,6 +8,7 @@ public class YoutubeChannelRecord : BaseEntity<string>
   public DateTime PublishedAt { get; set; }
   public string ThumbnailUrl { get; set; }
   public DateTime UpdatedAt { get; set; }
+  public bool IsSubscribed { get; set; } = false;
 
   public string SecurityGroupId { get; set; }
 }
