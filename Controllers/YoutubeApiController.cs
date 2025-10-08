@@ -21,10 +21,10 @@ public class YoutubeApiController : ControllerBase
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpGet("list-channels")]
   [ActionName("list-channels")]
-  public async Task<IActionResult> ListChannels()
+  public async Task<IActionResult> ListChannels([FromQuery] int from = 0, [FromQuery] int limit = 10)
   {
     var openId = User.GetOid();
-    var (result, err) = await youtubeApi.ListChannels(openId);
+    var (result, err) = await youtubeApi.ListChannels(openId, from, limit);
 
     if (result is null)
     {

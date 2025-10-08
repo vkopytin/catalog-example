@@ -5,5 +5,9 @@ namespace Models.YoutubeApi;
 
 public record YoutubeChannelResponse(
   [property: JsonPropertyName("items")]
-  List<YoutubeChannelRecord> Items
+  List<YoutubeChannelRecord> Items,
+  [property: JsonPropertyName("limit")]
+  int Limit,
+  [property: JsonPropertyName("total")]
+  int Total
 );
