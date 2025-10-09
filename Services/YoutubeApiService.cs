@@ -164,7 +164,7 @@ public class YoutubeApiService
       var subscriptionsQuery =
         from c in dbContext.YoutubeChannels
         where c.SecurityGroupId == securityGroupId
-        orderby c.Title
+        orderby c.Title.ToLower()
         select c;
 
       var existingChannels = await subscriptionsQuery.Skip(from).Take(limit).ToArrayAsync();
