@@ -26,9 +26,9 @@ public class YoutubeApiService
     this.httpClient = httpClient;
   }
 
-  public async Task<(YoutubeChannelRecord? result, ServiceError? error)> UnsubscribeChannel(string sequrityGroupId, string resourceId)
+  public async Task<(YoutubeChannelRecord? result, ServiceError? error)> UnsubscribeChannel(string securityGroupId, string resourceId)
   {
-    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(sequrityGroupId);
+    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(securityGroupId);
     if (token is null)
     {
       return (null, tokenError ?? new ServiceError("Unknown error"));
@@ -41,7 +41,7 @@ public class YoutubeApiService
       return (null, new ServiceError(err ?? "Unknown error"));
     }
 
-    var record = await dbContext.YoutubeChannels.FirstOrDefaultAsync(c => c.Id == resourceId && c.SecurityGroupId == sequrityGroupId);
+    var record = await dbContext.YoutubeChannels.FirstOrDefaultAsync(c => c.Id == resourceId && c.SecurityGroupId == securityGroupId);
     if (record is not null)
     {
       record.IsSubscribed = false;
@@ -82,7 +82,7 @@ public class YoutubeApiService
           ?? subscription.Snippet.Thumbnails?.Medium?.Url
           ?? subscription.Snippet.Thumbnails?.Default?.Url
           ?? string.Empty,
-        SecurityGroupId = sequrityGroupId,
+        SecurityGroupId = securityGroupId,
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow,
         IsSubscribed = false
@@ -94,9 +94,9 @@ public class YoutubeApiService
     }
   }
 
-  public async Task<(YoutubeChannelRecord? result, ServiceError? error)> SubscribeChannel(string sequrityGroupId, string channelId)
+  public async Task<(YoutubeChannelRecord? result, ServiceError? error)> SubscribeChannel(string securityGroupId, string channelId)
   {
-    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(sequrityGroupId);
+    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(securityGroupId);
     if (token is null)
     {
       return (null, tokenError ?? new ServiceError("Unknown error"));
@@ -143,7 +143,7 @@ public class YoutubeApiService
             ?? subscription.Snippet.Thumbnails?.Medium?.Url
             ?? subscription.Snippet.Thumbnails?.Default?.Url
             ?? string.Empty,
-          SecurityGroupId = sequrityGroupId,
+          SecurityGroupId = securityGroupId,
           CreatedAt = DateTime.UtcNow,
           UpdatedAt = DateTime.UtcNow,
           IsSubscribed = true
@@ -161,9 +161,9 @@ public class YoutubeApiService
     }
   }
 
-  public async Task<(YoutubeChannelResponse? result, ServiceError? error)> ListChannels(string sequrityGroupId, int from, int limit)
+  public async Task<(YoutubeChannelResponse? result, ServiceError? error)> ListChannels(string securityGroupId, int from, int limit)
   {
-    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(sequrityGroupId);
+    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(securityGroupId);
     if (token is null)
     {
       return (null, tokenError ?? new ServiceError("Unknown error"));
@@ -192,7 +192,7 @@ public class YoutubeApiService
 
       var subscriptionsQuery =
         from c in dbContext.YoutubeChannels
-        where c.SecurityGroupId == sequrityGroupId
+        where c.SecurityGroupId == securityGroupId
         orderby c.Title
         select c;
 
@@ -219,7 +219,7 @@ public class YoutubeApiService
               ?? channel.Snippet.Thumbnails?.Medium?.Url
               ?? channel.Snippet.Thumbnails?.Default?.Url
               ?? string.Empty,
-            SecurityGroupId = sequrityGroupId,
+            SecurityGroupId = securityGroupId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             IsSubscribed = true
