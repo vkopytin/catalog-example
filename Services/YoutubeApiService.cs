@@ -132,22 +132,7 @@ public class YoutubeApiService
       }
       else
       {
-        existingRecord = new YoutubeChannelRecord
-        {
-          Id = subscription.Id,
-          ChannelId = subscription.Snippet.ResourceId.ChannelId,
-          Title = subscription.Snippet.Title,
-          Description = subscription.Snippet.Description,
-          PublishedAt = subscription.Snippet.PublishedAt,
-          ThumbnailUrl = subscription.Snippet.Thumbnails?.High?.Url
-            ?? subscription.Snippet.Thumbnails?.Medium?.Url
-            ?? subscription.Snippet.Thumbnails?.Default?.Url
-            ?? string.Empty,
-          SecurityGroupId = securityGroupId,
-          CreatedAt = DateTime.UtcNow,
-          UpdatedAt = DateTime.UtcNow,
-          IsSubscribed = true
-        };
+        existingRecord = subscription.ToRecord(securityGroupId);
 
         await dbContext.YoutubeChannels.AddAsync(existingRecord);
         await dbContext.SaveChangesAsync();
@@ -203,38 +188,23 @@ public class YoutubeApiService
       }
       var res = new List<YoutubeChannelRecord>();
 
-      foreach (var channel in subscriptions.Items)
+      foreach (var subscription in subscriptions.Items)
       {
-        var existingRecord = await subscriptionsQuery.FirstOrDefaultAsync(c => c.Id == channel.Id);
+        var existingRecord = await subscriptionsQuery.FirstOrDefaultAsync(c => c.Id == subscription.Id);
         if (existingRecord is null)
         {
-          existingRecord = new YoutubeChannelRecord
-          {
-            Id = channel.Id,
-            ChannelId = channel.Snippet.ResourceId.ChannelId,
-            Title = channel.Snippet.Title,
-            Description = channel.Snippet.Description,
-            PublishedAt = channel.Snippet.PublishedAt,
-            ThumbnailUrl = channel.Snippet.Thumbnails?.High?.Url
-              ?? channel.Snippet.Thumbnails?.Medium?.Url
-              ?? channel.Snippet.Thumbnails?.Default?.Url
-              ?? string.Empty,
-            SecurityGroupId = securityGroupId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            IsSubscribed = true
-          };
+          existingRecord = subscription.ToRecord(securityGroupId);
 
           await dbContext.YoutubeChannels.AddAsync(existingRecord);
         }
         else
         {
-          existingRecord.Title = channel.Snippet.Title;
-          existingRecord.Description = channel.Snippet.Description;
-          existingRecord.PublishedAt = channel.Snippet.PublishedAt;
-          existingRecord.ThumbnailUrl = channel.Snippet.Thumbnails?.High?.Url
-              ?? channel.Snippet.Thumbnails?.Medium?.Url
-              ?? channel.Snippet.Thumbnails?.Default?.Url
+          existingRecord.Title = subscription.Snippet.Title;
+          existingRecord.Description = subscription.Snippet.Description;
+          existingRecord.PublishedAt = subscription.Snippet.PublishedAt;
+          existingRecord.ThumbnailUrl = subscription.Snippet.Thumbnails?.High?.Url
+              ?? subscription.Snippet.Thumbnails?.Medium?.Url
+              ?? subscription.Snippet.Thumbnails?.Default?.Url
               ?? string.Empty;
           existingRecord.UpdatedAt = DateTime.UtcNow;
           existingRecord.IsSubscribed = true;
