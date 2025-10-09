@@ -71,22 +71,8 @@ public class YoutubeApiService
         return (new YoutubeChannelRecord { Id = resourceId, IsSubscribed = false }, null);
       }
 
-      record = new YoutubeChannelRecord
-      {
-        Id = subscription.Id,
-        ChannelId = subscription.Snippet.ResourceId.ChannelId,
-        Title = subscription.Snippet.Title,
-        Description = subscription.Snippet.Description,
-        PublishedAt = subscription.Snippet.PublishedAt,
-        ThumbnailUrl = subscription.Snippet.Thumbnails?.High?.Url
-          ?? subscription.Snippet.Thumbnails?.Medium?.Url
-          ?? subscription.Snippet.Thumbnails?.Default?.Url
-          ?? string.Empty,
-        SecurityGroupId = securityGroupId,
-        CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow,
-        IsSubscribed = false
-      };
+      record = subscription.ToRecord(securityGroupId);
+      record.IsSubscribed = false;
       await dbContext.YoutubeChannels.AddAsync(record);
       await dbContext.SaveChangesAsync();
 
