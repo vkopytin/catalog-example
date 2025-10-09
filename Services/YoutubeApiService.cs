@@ -26,6 +26,141 @@ public class YoutubeApiService
     this.httpClient = httpClient;
   }
 
+  public async Task<(YoutubeChannelRecord? result, ServiceError? error)> UnsubscribeChannel(string sequrityGroupId, string resourceId)
+  {
+    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(sequrityGroupId);
+    if (token is null)
+    {
+      return (null, tokenError ?? new ServiceError("Unknown error"));
+    }
+
+    var (res, err) = await this.UnsubscribeYoutubeChannel(token, resourceId);
+
+    if (res is null)
+    {
+      return (null, new ServiceError(err ?? "Unknown error"));
+    }
+
+    var record = await dbContext.YoutubeChannels.FirstOrDefaultAsync(c => c.Id == resourceId && c.SecurityGroupId == sequrityGroupId);
+    if (record is not null)
+    {
+      record.IsSubscribed = false;
+      record.UpdatedAt = DateTime.UtcNow;
+      dbContext.YoutubeChannels.Update(record);
+
+      await dbContext.SaveChangesAsync();
+
+      return (record, null);
+    }
+    else
+    {
+      var (json, jsonError) = await this.GetYoutubeSubscriptionDetails(token, resourceId);
+
+      if (json is null)
+      {
+        return (new YoutubeChannelRecord { Id = resourceId, IsSubscribed = false }, null);
+      }
+
+      var subscription = JsonSerializer.Deserialize<YoutubeSubscription>(json, new JsonSerializerOptions
+      {
+        PropertyNameCaseInsensitive = true
+      });
+
+      if (subscription is null)
+      {
+        return (new YoutubeChannelRecord { Id = resourceId, IsSubscribed = false }, null);
+      }
+
+      record = new YoutubeChannelRecord
+      {
+        Id = subscription.Id,
+        ChannelId = subscription.Snippet.ResourceId.ChannelId,
+        Title = subscription.Snippet.Title,
+        Description = subscription.Snippet.Description,
+        PublishedAt = subscription.Snippet.PublishedAt,
+        ThumbnailUrl = subscription.Snippet.Thumbnails?.High?.Url
+          ?? subscription.Snippet.Thumbnails?.Medium?.Url
+          ?? subscription.Snippet.Thumbnails?.Default?.Url
+          ?? string.Empty,
+        SecurityGroupId = sequrityGroupId,
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow,
+        IsSubscribed = false
+      };
+      await dbContext.YoutubeChannels.AddAsync(record);
+      await dbContext.SaveChangesAsync();
+
+      return (record, null);
+    }
+  }
+
+  public async Task<(YoutubeChannelRecord? result, ServiceError? error)> SubscribeChannel(string sequrityGroupId, string channelId)
+  {
+    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(sequrityGroupId);
+    if (token is null)
+    {
+      return (null, tokenError ?? new ServiceError("Unknown error"));
+    }
+
+    var (json, err) = await this.SubscribeYoutubeChannel(token, channelId);
+
+    if (json is null)
+    {
+      return (null, new ServiceError(err ?? "Unknown error"));
+    }
+
+    try
+    {
+      var subscription = JsonSerializer.Deserialize<YoutubeSubscription>(json, new JsonSerializerOptions
+      {
+        PropertyNameCaseInsensitive = true
+      });
+
+      if (subscription is null)
+      {
+        return (null, new ServiceError("Failed to deserialize YouTube channels response. Result is null."));
+      }
+
+      var existingRecord = await dbContext.YoutubeChannels.FirstOrDefaultAsync(c => c.Id == subscription.Id);
+      if (existingRecord is not null)
+      {
+        existingRecord.IsSubscribed = true;
+        existingRecord.UpdatedAt = DateTime.UtcNow;
+        dbContext.YoutubeChannels.Update(existingRecord);
+
+        await dbContext.SaveChangesAsync();
+      }
+      else
+      {
+        existingRecord = new YoutubeChannelRecord
+        {
+          Id = subscription.Id,
+          ChannelId = subscription.Snippet.ResourceId.ChannelId,
+          Title = subscription.Snippet.Title,
+          Description = subscription.Snippet.Description,
+          PublishedAt = subscription.Snippet.PublishedAt,
+          ThumbnailUrl = subscription.Snippet.Thumbnails?.High?.Url
+            ?? subscription.Snippet.Thumbnails?.Medium?.Url
+            ?? subscription.Snippet.Thumbnails?.Default?.Url
+            ?? string.Empty,
+          SecurityGroupId = sequrityGroupId,
+          CreatedAt = DateTime.UtcNow,
+          UpdatedAt = DateTime.UtcNow,
+          IsSubscribed = true
+        };
+
+        await dbContext.YoutubeChannels.AddAsync(existingRecord);
+        await dbContext.SaveChangesAsync();
+      }
+
+      return (existingRecord, null);
+    }
+    catch (Exception ex)
+    {
+      return (null, new ServiceError($"Failed to deserialize unsubscribed YouTube channels response: {ex.Message}"));
+    }
+  }
+
   public async Task<(YoutubeChannelResponse? result, ServiceError? error)> ListChannels(string sequrityGroupId, int from, int limit)
   {
     var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(sequrityGroupId);
@@ -37,39 +172,40 @@ public class YoutubeApiService
     // js - btoa([8,12,16,0].map(a => String.fromCharCode(a)).join(''))
     var nextPage = Convert.ToBase64String([8, (byte)from, 16, 0]);
 
-    var (subscriptions, err) = await this.ListYoutubeSubscriptions(token, nextPage, limit);
-    if (subscriptions is null)
+    var (json, err) = await this.ListYoutubeSubscriptions(token, nextPage, limit);
+    if (json is null)
     {
       return (null, new ServiceError(err ?? "Unknown error"));
     }
 
     try
     {
-      var channels = JsonSerializer.Deserialize<YoutubeChannelsResponse>(subscriptions, new JsonSerializerOptions
+      var subscriptions = JsonSerializer.Deserialize<YoutubeChannelsResponse>(json, new JsonSerializerOptions
       {
         PropertyNameCaseInsensitive = true
       });
 
-      if (channels is null)
+      if (subscriptions is null)
       {
         return (null, new ServiceError("Failed to deserialize YouTube channels response. Result is null."));
       }
 
-      var channelsQuery = from c in dbContext.YoutubeChannels
-                          where c.SecurityGroupId == sequrityGroupId
-                          orderby c.Title
-                          select c;
+      var subscriptionsQuery =
+        from c in dbContext.YoutubeChannels
+        where c.SecurityGroupId == sequrityGroupId
+        orderby c.Title
+        select c;
 
-      var existingChannels = await channelsQuery.Skip(from).Take(limit).ToArrayAsync();
+      var existingChannels = await subscriptionsQuery.Skip(from).Take(limit).ToArrayAsync();
       foreach (var c in existingChannels)
       {
         c.IsSubscribed = false;
       }
       var res = new List<YoutubeChannelRecord>();
 
-      foreach (var channel in channels.Items)
+      foreach (var channel in subscriptions.Items)
       {
-        var existingRecord = await channelsQuery.FirstOrDefaultAsync(c => c.Id == channel.Id);
+        var existingRecord = await subscriptionsQuery.FirstOrDefaultAsync(c => c.Id == channel.Id);
         if (existingRecord is null)
         {
           existingRecord = new YoutubeChannelRecord
@@ -111,12 +247,12 @@ public class YoutubeApiService
 
       await dbContext.SaveChangesAsync();
 
-      var result = MergeItems(existingChannels, [.. res], limit);
+      var result = MergeItems(existingChannels, [.. res], 100);
 
       return (new(
         Items: [.. result],
-        Limit: channels.PageInfo.ResultsPerPage,
-        Total: channels.PageInfo.TotalResults
+        Limit: subscriptions.PageInfo.ResultsPerPage,
+        Total: subscriptions.PageInfo.TotalResults
       ), null);
     }
     catch (Exception ex)
@@ -134,7 +270,25 @@ public class YoutubeApiService
       dict[r.Id] = r;
     }
 
-    return dict.Values.OrderBy(c => c.Title).Take(limit).ToArray();
+    return [.. dict.Values.OrderBy(c => c.Title).Take(limit)];
+  }
+
+  private async Task<(string? result, string? error)> GetYoutubeSubscriptionDetails(string accessToken, string channelId)
+  {
+    var parts = Uri.EscapeDataString("snippet,contentDetails,statistics");
+    var channelsUri = $"https://www.googleapis.com/youtube/v3/channels?part={parts}&id={channelId}";
+    var channelsRequest = new HttpRequestMessage(HttpMethod.Get, channelsUri);
+    channelsRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+    var channelsResponse = await httpClient.SendAsync(channelsRequest);
+    var channelsResponseContent = await channelsResponse.Content.ReadAsStringAsync();
+
+    if (channelsResponse.IsSuccessStatusCode is false)
+    {
+      return (null, $"Failed to get YouTube channel details: {channelsResponseContent}");
+    }
+
+    return (channelsResponseContent, null);
   }
 
   private async Task<(string? result, string? error)> ListYoutubeSubscriptions(string accessToken, string from, int limit)
@@ -153,5 +307,53 @@ public class YoutubeApiService
     }
 
     return (subscriptionsResponseContent, null);
+  }
+
+  private async Task<(string? result, string? error)> UnsubscribeYoutubeChannel(string accessToken, string channelId)
+  {
+    var unsubscribeUri = $"https://www.googleapis.com/youtube/v3/subscriptions?id={channelId}";
+    var unsubscribeRequest = new HttpRequestMessage(HttpMethod.Delete, unsubscribeUri);
+    unsubscribeRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+    var unsubscribeResponse = await httpClient.SendAsync(unsubscribeRequest);
+    var unsubscribeResponseContent = await unsubscribeResponse.Content.ReadAsStringAsync();
+
+    if (unsubscribeResponse.IsSuccessStatusCode is false)
+    {
+      return (null, $"Failed to unsubscribe YouTube channel: {unsubscribeResponseContent}");
+    }
+
+    return (unsubscribeResponseContent, null);
+  }
+
+  private async Task<(string? result, string? error)> SubscribeYoutubeChannel(string accessToken, string channelId)
+  {
+    var subscribeUri = $"https://www.googleapis.com/youtube/v3/subscriptions?part=snippet";
+    var subscribeRequest = new HttpRequestMessage(HttpMethod.Post, subscribeUri);
+    subscribeRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+    var body = new
+    {
+      snippet = new
+      {
+        resourceId = new
+        {
+          kind = "youtube#channel",
+          channelId = channelId
+        }
+      }
+    };
+
+    subscribeRequest.Content = new StringContent(JsonSerializer.Serialize(body), System.Text.Encoding.UTF8, "application/json");
+
+    var subscribeResponse = await httpClient.SendAsync(subscribeRequest);
+    var subscribeResponseContent = await subscribeResponse.Content.ReadAsStringAsync();
+
+    if (subscribeResponse.IsSuccessStatusCode is false)
+    {
+      return (null, $"Failed to subscribe to YouTube channel: {subscribeResponseContent}");
+    }
+
+    return (subscribeResponseContent, null);
   }
 }

@@ -39,8 +39,31 @@ public class YoutubeApiController : ControllerBase
   [ActionName("unsubscribe/[channelId]")]
   public async Task<IActionResult> Unsubscribe(string channelId)
   {
-    await Task.Delay(1);
+    var openId = User.GetOid();
+    var (result, err) = await youtubeApi.UnsubscribeChannel(openId, channelId);
 
-    return Ok();
+    if (result is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(result);
+  }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpPost("subscribe/{channelId}")]
+  [ActionName("subscribe/[channelId]")]
+  public async Task<IActionResult> Subscribe(string channelId)
+  {
+    var openId = User.GetOid();
+
+    var (result, err) = await youtubeApi.SubscribeChannel(openId, channelId);
+
+    if (result is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(result);
   }
 }
