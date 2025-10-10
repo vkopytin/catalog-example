@@ -5,7 +5,7 @@ namespace Services.YoutubeApi;
 
 public static class YoutubeApiExtentions
 {
-  public static YoutubeChannelRecord ToRecord(this YoutubeSubscription channel, string securityGroupId)
+  public static YoutubeChannelRecord ToRecord(this YoutubeSubscription channel)
   {
     return new YoutubeChannelRecord
     {
@@ -18,7 +18,6 @@ public static class YoutubeApiExtentions
               ?? channel.Snippet.Thumbnails?.Medium?.Url
               ?? channel.Snippet.Thumbnails?.Default?.Url
               ?? string.Empty,
-      SecurityGroupId = securityGroupId,
       CreatedAt = DateTime.UtcNow,
       UpdatedAt = DateTime.UtcNow,
       IsSubscribed = true

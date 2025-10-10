@@ -71,7 +71,8 @@ public class YoutubeApiService
         return (new YoutubeChannelRecord { Id = resourceId, IsSubscribed = false }, null);
       }
 
-      record = subscription.ToRecord(securityGroupId);
+      record = subscription.ToRecord();
+      record.SecurityGroupId = securityGroupId;
       record.IsSubscribed = false;
       await dbContext.YoutubeChannels.AddAsync(record);
       await dbContext.SaveChangesAsync();
@@ -118,7 +119,8 @@ public class YoutubeApiService
       }
       else
       {
-        existingRecord = subscription.ToRecord(securityGroupId);
+        existingRecord = subscription.ToRecord();
+        existingRecord.SecurityGroupId = securityGroupId;
 
         await dbContext.YoutubeChannels.AddAsync(existingRecord);
         await dbContext.SaveChangesAsync();
@@ -179,7 +181,8 @@ public class YoutubeApiService
         var existingRecord = await subscriptionsQuery.FirstOrDefaultAsync(c => c.Id == subscription.Id);
         if (existingRecord is null)
         {
-          existingRecord = subscription.ToRecord(securityGroupId);
+          existingRecord = subscription.ToRecord();
+          existingRecord.SecurityGroupId = securityGroupId;
 
           await dbContext.YoutubeChannels.AddAsync(existingRecord);
         }
