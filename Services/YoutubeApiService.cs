@@ -134,7 +134,7 @@ public class YoutubeApiService
     }
   }
 
-  public async Task<(YoutubeChannelResponse? result, ServiceError? error)> ListChannels(string securityGroupId, int from, int limit)
+  public async Task<(YoutubeChannelResponse? result, ServiceError? error)> ListSubscriptions(string securityGroupId, int from, int limit)
   {
     var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(securityGroupId);
     if (token is null)
@@ -206,12 +206,69 @@ public class YoutubeApiService
 
       await dbContext.SaveChangesAsync();
 
+      return (new(
+        Items: [.. res],
+        Limit: subscriptions.PageInfo.ResultsPerPage,
+        Total: subscriptions.PageInfo.TotalResults
+      ), null);
+    }
+    catch (Exception ex)
+    {
+      return (null, new ServiceError($"Failed to deserialize YouTube channels response: {ex.Message}"));
+    }
+  }
+
+  public async Task<(YoutubeChannelResponse? result, ServiceError? error)> ListChannels(string securityGroupId, int from, int limit)
+  {
+    var (token, tokenError) = await this.authorizationTokensService.GetAccessToken(securityGroupId);
+    if (token is null)
+    {
+      return (null, tokenError ?? new ServiceError("Unknown error"));
+    }
+
+    try
+    {
+      var subscriptionsQuery =
+        from c in dbContext.YoutubeChannels
+        where c.SecurityGroupId == securityGroupId
+        orderby c.Title.ToLower()
+        select c;
+
+      var total = await subscriptionsQuery.CountAsync();
+      var existingChannels = await subscriptionsQuery.Skip(from).Take(limit).ToArrayAsync();
+
+      var ids = existingChannels.Select(c => c.Id).ToArray();
+      var (json, error) = await this.ListYoutubeSubscriptions(token, ids, limit);
+      if (json is null)
+      {
+        return (null, new ServiceError(error ?? "Unknown error"));
+      }
+
+      var subscriptions = JsonSerializer.Deserialize<YoutubeChannelsResponse>(json, new JsonSerializerOptions
+      {
+        PropertyNameCaseInsensitive = true
+      });
+
+      if (subscriptions is null)
+      {
+        return (null, new ServiceError("Failed to deserialize YouTube channels response. Result is null."));
+      }
+
+      var res = new List<YoutubeChannelRecord>();
+      foreach (var channel in existingChannels)
+      {
+        channel.IsSubscribed = subscriptions.Items.Any(i => i.Id == channel.Id);
+        res.Add(channel);
+      }
+
+      await dbContext.SaveChangesAsync();
+
       var result = MergeItems(existingChannels, [.. res], 100);
 
       return (new(
         Items: [.. result],
-        Limit: subscriptions.PageInfo.ResultsPerPage,
-        Total: subscriptions.PageInfo.TotalResults
+        Limit: limit,
+        Total: total
       ), null);
     }
     catch (Exception ex)
@@ -254,6 +311,24 @@ public class YoutubeApiService
   {
     var parts = Uri.EscapeDataString("snippet");
     var subscriptionsUri = $"https://www.googleapis.com/youtube/v3/subscriptions?part={parts}&mine=true&order=alphabetical&maxResults={limit}&pageToken={from}";
+    var subscriptionsRequest = new HttpRequestMessage(HttpMethod.Get, subscriptionsUri);
+    subscriptionsRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
+
+    var subscriptionsResponse = await httpClient.SendAsync(subscriptionsRequest);
+    var subscriptionsResponseContent = await subscriptionsResponse.Content.ReadAsStringAsync();
+
+    if (subscriptionsResponse.IsSuccessStatusCode is false)
+    {
+      return (null, $"Failed to get YouTube subscriptions: {subscriptionsResponseContent}");
+    }
+
+    return (subscriptionsResponseContent, null);
+  }
+
+  private async Task<(string? result, string? error)> ListYoutubeSubscriptions(string accessToken, string[] channelIds, int limit)
+  {
+    var ids = Uri.EscapeDataString(string.Join(",", channelIds));
+    var subscriptionsUri = $"https://www.googleapis.com/youtube/v3/subscriptions?id={ids}&maxResults={limit}";
     var subscriptionsRequest = new HttpRequestMessage(HttpMethod.Get, subscriptionsUri);
     subscriptionsRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
 

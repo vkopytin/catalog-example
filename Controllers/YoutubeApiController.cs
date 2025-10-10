@@ -19,6 +19,22 @@ public class YoutubeApiController : ControllerBase
   }
 
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpGet("list-subscriptions")]
+  [ActionName("list-subscriptions")]
+  public async Task<IActionResult> ListSubscriptions([FromQuery] int from = 0, [FromQuery] int limit = 10)
+  {
+    var openId = User.GetOid();
+    var (result, err) = await youtubeApi.ListSubscriptions(openId, from, limit);
+
+    if (result is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(result);
+  }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpGet("list-channels")]
   [ActionName("list-channels")]
   public async Task<IActionResult> ListChannels([FromQuery] int from = 0, [FromQuery] int limit = 10)
