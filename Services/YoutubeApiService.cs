@@ -310,7 +310,7 @@ public class YoutubeApiService
   private async Task<(string? result, string? error)> ListYoutubeSubscriptions(string accessToken, string from, int limit)
   {
     var parts = Uri.EscapeDataString("snippet");
-    var subscriptionsUri = $"https://www.googleapis.com/youtube/v3/subscriptions?part={parts}&mine=true&order=alphabetical&maxResults={limit}&pageToken={from}";
+    var subscriptionsUri = $"https://www.googleapis.com/youtube/v3/subscriptions?part={parts}&mine=true&order=relevance&maxResults={limit}&pageToken={from}";
     var subscriptionsRequest = new HttpRequestMessage(HttpMethod.Get, subscriptionsUri);
     subscriptionsRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
 
