@@ -23,12 +23,12 @@ public class ArticlesService : IArticlesService
     await Task.Delay(1);
 
     var query
-    = from a in dbContext.Articles.Skip(skip).Take(limit).AsEnumerable()
+    = from a in dbContext.Articles.AsEnumerable()
       join m in dbContext.ArticleBlocks on a.MediaId equals m.Id into mleft
       from sub in mleft.DefaultIfEmpty()
       orderby a.CreatedAt descending
-      select a;
-    var articles = query.Select(m => m.ToModel()).ToArray();
+      select a.ToModel();
+    var articles = query.Skip(skip).Take(limit).ToArray();
 
     return (articles, null);
   }

@@ -23,13 +23,13 @@ public class WebSitesService : IWebSitesService
 
     try
     {
-      var query = from sites in dbContext.WebSites.Skip(skip).Take(limit).AsEnumerable()
+      var query = from sites in dbContext.WebSites.AsEnumerable()
                   join parent in dbContext.WebSites on sites.ParentId equals parent.Id into parents
                   from sub in parents.DefaultIfEmpty()
                   orderby sites.CreatedAt descending
                   select sites;
 
-      var webSites = query.Select(s => s.ToModel()).ToArray();
+      var webSites = query.Skip(skip).Take(limit).Select(s => s.ToModel()).ToArray();
 
       return (webSites, null);
     }
