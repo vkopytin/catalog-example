@@ -5,6 +5,23 @@ namespace Services;
 
 public static class ArticleBlockExtentions
 {
+  public static ArticleBlockRecord ToRecord(this ArticleBlockModel model)
+  {
+    return new()
+    {
+      Id = model.Id,
+      Title = model.Title,
+      Description = model.Description,
+      Origin = model.Origin,
+      SourceUrl = model.SourceUrl,
+      FileName = model.FileName,
+      MediaId = model.MediaId,
+      MediaError = model.MediaError,
+      Width = model.Width,
+      Height = model.Height
+    };
+  }
+
   public static ArticleBlockModel ToModel(this ArticleBlockRecord record)
   {
     return new(
@@ -27,5 +44,11 @@ public static class ArticleBlockExtentions
     record.Title = model.Title;
     record.Description = model.Description;
     record.Origin = model.Origin;
+    record.SourceUrl = model.SourceUrl;
+    record.FileName = model.FileName;
+    record.MediaId = model.MediaId;
+    record.MediaError = model.MediaError;
+    record.Width = model.Width;
+    record.Height = model.Height;
   }
 }

@@ -94,9 +94,10 @@ builder.Services.AddAuthorization(options =>
     // then we use the refresh token to get a new access token and save them.
     // If the refresh token does not work for some reason then we redirect to
     // the login screen.
-    OnValidatePrincipal = async cookieCtx =>
+    OnValidatePrincipal = cookieCtx =>
     {
       Console.WriteLine(cookieCtx.Properties);
+      return Task.CompletedTask;
     }
   };
 })

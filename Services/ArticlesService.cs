@@ -1,5 +1,7 @@
 using Db;
+using Db.Records;
 using Errors;
+using Microsoft.EntityFrameworkCore;
 using Models;
 using MongoDB.Driver.Linq;
 
@@ -16,24 +18,35 @@ public class ArticlesService : IArticlesService
     this.dbContext = dbContext;
   }
 
-  public async Task<(ArticleModel[]? articles, ServiceError? err)> ListArticles(int from = 0, int limit = 20)
+  public async Task<(ArticleModel[]? articles, ServiceError? err)> ListArticles(int skip = 0, int limit = 20)
   {
+    await Task.Delay(1);
+
     var query
-    = from a in dbContext.Articles.AsEnumerable()
+    = from a in dbContext.Articles.Skip(skip).Take(limit).AsEnumerable()
       join m in dbContext.ArticleBlocks on a.MediaId equals m.Id into mleft
       from sub in mleft.DefaultIfEmpty()
       orderby a.CreatedAt descending
       select a;
-    var articles = query.Skip(from).Take(limit).Select(m => m.ToModel()).ToArray();
+    var articles = query.Select(m => m.ToModel()).ToArray();
 
     return (articles, null);
   }
 
   public async Task<(ArticleModel? article, ServiceError? err)> GetArticle(Guid id)
   {
-    var article = await dbContext.Articles.FindAsync(id);
+    await Task.Delay(1);
 
-    return (article?.ToModel(), null);
+    try
+    {
+      var article = this.GetArticleInternal(id);
+
+      return (article?.ToModel(), null);
+    }
+    catch (Exception ex)
+    {
+      return (null, new ServiceError($"Get error. {ex.Message}"));
+    }
   }
 
   public async Task<(ArticleModel? article, ServiceError? err)> CreateArticle(ArticleModel article)
@@ -73,18 +86,55 @@ public class ArticlesService : IArticlesService
     }
 
     record.Assign(article);
+    if (article.MediaId == 0 && article.Media != null)
+    {
+      var media = article.Media;
+      if (media.Id == 0)
+      {
+        var mediaRecord = media.ToRecord();
+        var lastMediaId = await this.dbContext.ArticleBlocks.Select(b => b.Id).MaxAsync();
+        mediaRecord.Id = lastMediaId + 1;
+        var res = await this.dbContext.ArticleBlocks.AddAsync(mediaRecord);
+        await this.dbContext.SaveChangesAsync();
+        record.MediaId = res.Entity.Id;
+      }
+      else
+      {
+        record.MediaId = media?.Id ?? 0;
+      }
+    }
+
     record.UpdatedAt = DateTime.UtcNow;
 
     this.dbContext.Articles.Update(record);
 
-    await this.dbContext.SaveChangesAsync();
-
-    record = await dbContext.Articles.FindAsync(article.Id);
-    if (record is null)
+    try
     {
-      return (null, new ServiceError($"Update error. No item with the id ({article.Id}) was found"));
-    }
+      await this.dbContext.SaveChangesAsync();
+      record = this.GetArticleInternal(article.Id);
+      if (record is null)
+      {
+        return (null, new ServiceError($"Update error. No item with the id ({article.Id}) was found"));
+      }
 
-    return (record.ToModel(), null);
+      return (record.ToModel(), null);
+
+    }
+    catch (Exception ex)
+    {
+      return (null, new ServiceError($"Update error. {ex.Message}"));
+    }
+  }
+
+  private ArticleRecord? GetArticleInternal(Guid id)
+  {
+    var query =
+      from a in dbContext.Articles.AsEnumerable()
+      join m in dbContext.ArticleBlocks on a.MediaId equals m.Id into mleft
+      from sub in mleft.DefaultIfEmpty()
+      where a.Id == id
+      select a;
+
+    return query.FirstOrDefault();
   }
 }

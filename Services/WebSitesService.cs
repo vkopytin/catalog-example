@@ -17,17 +17,19 @@ public class WebSitesService : IWebSitesService
     this.dbContext = dbContext;
     this.logger = logger;
   }
-  public async Task<(WebSiteModel[]? articles, ServiceError? err)> ListWebSites(int from = 0, int limit = 20)
+  public async Task<(WebSiteModel[]? articles, ServiceError? err)> ListWebSites(int skip = 0, int limit = 20)
   {
+    await Task.Delay(1);
+
     try
     {
-      var query = from sites in dbContext.WebSites.AsEnumerable()
+      var query = from sites in dbContext.WebSites.Skip(skip).Take(limit).AsEnumerable()
                   join parent in dbContext.WebSites on sites.ParentId equals parent.Id into parents
                   from sub in parents.DefaultIfEmpty()
                   orderby sites.CreatedAt descending
                   select sites;
 
-      var webSites = query.Skip(from).Take(limit).Select(s => s.ToModel()).ToArray();
+      var webSites = query.Select(s => s.ToModel()).ToArray();
 
       return (webSites, null);
     }
