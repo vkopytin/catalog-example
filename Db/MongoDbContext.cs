@@ -45,17 +45,23 @@ public class MongoDbContext : DbContext
     modelBuilder.Entity<ArticleRecord>().HasOne(a => a.Media);
     modelBuilder.Entity<ArticleRecord>().HasMany(a => a.Blocks).WithOne(b => b.Article).HasForeignKey(b => b.ArticleId);
     modelBuilder.Entity<ArticleRecord>().HasMany(a => a.WebSiteArticles).WithOne(w => w.Article).HasForeignKey(w => w.ArticleId);
-    modelBuilder.Entity<ArticleRecord>().HasMany(a => a.WebSites).WithMany(w => w.Articles).UsingEntity<WebSiteArticleRecord>(
-        r => r.HasOne(e => e.WebSite).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.WebSiteId),
-        l => l.HasOne(e => e.Article).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.ArticleId));
     modelBuilder.Entity<ArticleBlockRecord>().HasOne(b => b.Article);
+    modelBuilder.Entity<WebSiteRecord>().HasOne(w => w.Parent).WithMany(w => w.SubSites).HasForeignKey(w => w.ParentId);
     modelBuilder.Entity<WebSiteArticleRecord>().HasOne(w => w.Article).WithMany(a => a.WebSiteArticles).HasForeignKey(w => w.ArticleId);
     modelBuilder.Entity<WebSiteArticleRecord>().HasOne(w => w.WebSite).WithMany(a => a.WebSiteArticles).HasForeignKey(w => w.WebSiteId);
     modelBuilder.Entity<ArticleRecord>()
-        .HasMany(a => a.WebSites)
-        .WithMany(e => e.Articles)
-        .UsingEntity<WebSiteArticleRecord>(
-            r => r.HasOne(e => e.WebSite).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.WebSiteId),
-            l => l.HasOne(e => e.Article).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.ArticleId));
+      .HasMany(a => a.WebSites)
+      .WithMany(e => e.Articles)
+      .UsingEntity<WebSiteArticleRecord>(
+        r => r.HasOne(e => e.WebSite).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.WebSiteId),
+        l => l.HasOne(e => e.Article).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.ArticleId)
+      );
+    modelBuilder.Entity<WebSiteRecord>()
+      .HasMany(w => w.Articles)
+      .WithMany(e => e.WebSites)
+      .UsingEntity<WebSiteArticleRecord>(
+          r => r.HasOne(e => e.Article).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.ArticleId),
+          l => l.HasOne(e => e.WebSite).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.WebSiteId)
+      );
   }
 }
