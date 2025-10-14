@@ -30,12 +30,12 @@ public class MediaLibraryService : IMediaLibraryService
     var (imgBB, error) = await this.CreateImageBB(stream, contentType, fileName);
     if (imgBB is null)
     {
-      return (null, new ServiceError(error));
+      return (null, new ServiceError(error ?? "Unknown error"));
     }
 
     if (imgBB.Data is null)
     {
-      return (null, new ServiceError("Starange error"));
+      return (null, new ServiceError("Strange error"));
     }
 
     existing.SourceUrl = null;

@@ -1,3 +1,5 @@
+using Db.Records;
+
 namespace Models;
 
 public record ArticleModel
@@ -9,5 +11,7 @@ public record ArticleModel
   int MediaId,
   string? Origin,
   ArticleBlockModel? Media,
-  ICollection<ArticleBlockModel> Blocks
+  ICollection<ArticleBlockModel> Blocks,
+  WebSiteModel[] WebSites,
+  WebSiteArticleRecord[] WebSiteArticles
 );

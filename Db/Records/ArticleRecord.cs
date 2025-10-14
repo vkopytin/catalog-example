@@ -24,6 +24,6 @@ public class ArticleRecord : BaseEntity<Guid>
   [InverseProperty("Article")]
   public ICollection<ArticleBlockRecord> Blocks { get; } = [];
 
-  public WebSiteRecord[] WebSites { get; set; } = [];
-  public WebSiteArticleRecord[] WebSiteArticles { get; set; } = [];
+  public ICollection<WebSiteRecord> WebSites { get; set; } = [];
+  public ICollection<WebSiteArticleRecord> WebSiteArticles { get; set; } = [];
 }

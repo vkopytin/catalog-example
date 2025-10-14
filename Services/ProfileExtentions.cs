@@ -65,9 +65,9 @@ public static class ProfileExtentions
   public static AuthUser ToModel(this UserRecord user)
   {
     return new(
-      UserName: user.UserName,
-      Name: user.Name,
-      Role: user.Role,
+      UserName: user.UserName ?? string.Empty,
+      Name: user.Name ?? string.Empty,
+      Role: user.Role ?? string.Empty,
       IsActive: user.IsActive
     );
   }

@@ -198,4 +198,42 @@ public class ProfileService : IProfileService
       return (null, new(Message: ex.Message));
     }
   }
+
+  public async Task<(WebSiteArticleRecord?, ProfileError?)> PublishArticleToWebSite(ArticleModel article, WebSiteModel webSite)
+  {
+    try
+    {
+      var site = await dbContext.WebSites.FindAsync(webSite.Id);
+      if (site is null)
+      {
+        return (null, new(Message: $"No website found for the id: {webSite.Id}"));
+      }
+
+      var existing = await dbContext.WebSiteArticles.Where(a => a.WebSiteId == webSite.Id && a.ArticleId == article.Id)
+        .Take(1)
+        .FirstOrDefaultAsync();
+
+      if (existing is null)
+      {
+        var newIntId = await this.dbContext.WebSiteArticles.Select(a => a.Id).MaxAsync() + 1;
+        var siteArticle = new WebSiteArticleRecord
+        {
+          Id = newIntId,
+          WebSiteId = webSite.Id,
+          ArticleId = article.Id,
+        };
+
+        await dbContext.WebSiteArticles.AddAsync(siteArticle);
+        await dbContext.SaveChangesAsync();
+        return (siteArticle, null);
+      }
+
+      return (existing, null);
+    }
+    catch (Exception ex)
+    {
+      this.logger.LogError(ex, "Error, while publishing article to website");
+      return (null, new(Message: ex.Message));
+    }
+  }
 }

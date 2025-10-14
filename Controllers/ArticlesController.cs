@@ -110,6 +110,13 @@ public class ArticlesController : ControllerBase
       return BadRequest(err);
     }
 
+    var securityGroupId = User.GetOid();
+    var (webSite, error) = await this.profile.GetUserWebSite(securityGroupId);
+    if (webSite is not null)
+    {
+      await this.profile.PublishArticleToWebSite(updatedArticle, webSite);
+    }
+
     return Ok(updatedArticle);
   }
 }
