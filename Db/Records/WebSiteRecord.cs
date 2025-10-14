@@ -18,4 +18,7 @@ public class WebSiteRecord : BaseEntity<Guid>
   [ForeignKey("UserId")]
   public UserRecord? User { get; set; }
 
+  public ArticleRecord[] Articles { get; set; } = [];
+
+  public WebSiteArticleRecord[] WebSiteArticles { get; set; } = [];
 }

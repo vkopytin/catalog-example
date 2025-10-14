@@ -15,7 +15,8 @@ public static class ProfileExtentions
       client.AllowedScopes ?? [],
       client.ClientUri,
       client.RedirectUri,
-      client.IsActive
+      client.IsActive,
+      client.SecurityGroupId
     );
   }
 
@@ -30,7 +31,8 @@ public static class ProfileExtentions
       AllowedScopes: request.AllowedScopes,
       ClientUri: request.ClientUri,
       RedirectUri: request.RedirectUri,
-      IsActive: request.IsActive
+      IsActive: request.IsActive,
+      SecurityGroupId: request.SecurityGroupId
     );
   }
 
@@ -45,7 +47,8 @@ public static class ProfileExtentions
       AllowedScopes = client.AllowedScopes,
       ClientUri = client.ClientUri,
       RedirectUri = client.RedirectUri,
-      IsActive = client.IsActive
+      IsActive = client.IsActive,
+      SecurityGroupId = client.SecurityGroupId
     };
   }
 

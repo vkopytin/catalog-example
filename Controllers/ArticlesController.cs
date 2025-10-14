@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Services;
+using Utils;
 
 namespace Controllers;
 
@@ -10,12 +11,19 @@ namespace Controllers;
 [ApiController]
 public class ArticlesController : ControllerBase
 {
+  private readonly AuthorizationTokensService authTokens;
   private readonly IProfileService profile;
   private readonly IArticlesService articles;
   private readonly IWebSitesService webSites;
 
-  public ArticlesController(IProfileService profile, IArticlesService articles, IWebSitesService webSites)
+  public ArticlesController(
+    AuthorizationTokensService authTokens,
+    IProfileService profile,
+    IArticlesService articles,
+    IWebSitesService webSites
+  )
   {
+    this.authTokens = authTokens;
     this.profile = profile;
     this.articles = articles;
     this.webSites = webSites;
@@ -78,6 +86,8 @@ public class ArticlesController : ControllerBase
   [ActionName("create")]
   public async Task<IActionResult> CreateArticle([FromBody] ArticleModel article)
   {
+    var securityGroupId = User.GetOid();
+    var webSite = await this.profile.GetUserWebSite(securityGroupId);
     var (createdArticle, err) = await this.articles.CreateArticle(article);
 
     if (createdArticle is null)

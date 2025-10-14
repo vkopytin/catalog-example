@@ -16,6 +16,7 @@ public class MongoDbContext : DbContext
   public DbSet<WebSiteArticleRecord> WebSiteArticles { get; init; }
   public DbSet<AuthorizationTokenRecord> AuthTokens { get; init; }
   public DbSet<YoutubeChannelRecord> YoutubeChannels { get; init; }
+  public DbSet<SecurityGroupRecord> SecurityGroups { get; init; }
 
   public MongoDbContext(MongoClient client)
    : base(new DbContextOptionsBuilder<MongoDbContext>().UseMongoDB(client, "main").Options)
@@ -36,11 +37,18 @@ public class MongoDbContext : DbContext
     modelBuilder.Entity<WebSiteArticleRecord>().ToCollection("webSiteArticles");
     modelBuilder.Entity<AuthorizationTokenRecord>().ToCollection("authTokens");
     modelBuilder.Entity<YoutubeChannelRecord>().ToCollection("youtubeChannels");
+    modelBuilder.Entity<SecurityGroupRecord>().ToCollection("securityGroups");
 
     modelBuilder.Entity<ArticleRecord>().HasOne(a => a.Media);
     modelBuilder.Entity<ArticleRecord>().HasMany(a => a.Blocks).WithOne(b => b.Article).HasForeignKey(b => b.ArticleId);
     modelBuilder.Entity<ArticleBlockRecord>().HasOne(b => b.Article);
     modelBuilder.Entity<WebSiteArticleRecord>().HasOne(w => w.Article);
     modelBuilder.Entity<WebSiteArticleRecord>().HasOne(w => w.WebSite);
+    modelBuilder.Entity<ArticleRecord>()
+        .HasMany(a => a.WebSites)
+        .WithMany(e => e.Articles)
+        .UsingEntity<WebSiteArticleRecord>(
+            r => r.HasOne(e => e.WebSite).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.WebSiteId),
+            l => l.HasOne(e => e.Article).WithMany(e => e.WebSiteArticles).HasForeignKey(e => e.ArticleId));
   }
 }

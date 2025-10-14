@@ -14,4 +14,6 @@ public interface IProfileService
   Task<(AuthUser?, ProfileError?)> GetUser(string userId);
   Task<(AuthUser?, ProfileError?)> AddUser(AuthUser user);
   Task<(AuthUser?, ProfileError?)> SaveUser(AuthUser user);
+
+  Task<(WebSiteModel?, ProfileError?)> GetUserWebSite(string securityGroupId);
 }

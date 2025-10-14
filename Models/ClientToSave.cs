@@ -8,5 +8,6 @@ public record ClientToSave(
   string[] AllowedScopes,
   string ClientUri,
   string RedirectUri,
-  bool IsActive
+  bool IsActive,
+  string SecurityGroupId
 );

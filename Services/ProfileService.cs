@@ -149,4 +149,33 @@ public class ProfileService : IProfileService
 
     return (existingUser.ToModel(), null);
   }
+
+  public async Task<(WebSiteModel?, ProfileError?)> GetUserWebSite(string securityGroupId)
+  {
+    try
+    {
+      var securityGroup = await dbContext.SecurityGroups.FindAsync(int.Parse(securityGroupId));
+      if (securityGroup is null)
+      {
+        return (null, new(Message: $"No security group found for the id: {securityGroupId}"));
+      }
+
+      var webSite = await dbContext.WebSites
+        .Where(w => w.Id == securityGroup.SelectedSiteId)
+        .Take(1)
+        .FirstOrDefaultAsync();
+
+      if (webSite is null)
+      {
+        return (null, new(Message: $"No website found for the security group id: {securityGroupId}"));
+      }
+
+      return (webSite.ToModel(), null);
+    }
+    catch (Exception ex)
+    {
+      this.logger.LogError(ex, "Error, while fetching website from DB");
+      return (null, new(Message: ex.Message));
+    }
+  }
 }
