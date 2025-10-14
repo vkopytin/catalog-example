@@ -4,6 +4,7 @@ using Errors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver.Linq;
+using Db.Records;
 
 namespace Services;
 
@@ -154,7 +155,7 @@ public class ProfileService : IProfileService
   {
     try
     {
-      var securityGroup = await dbContext.SecurityGroups.FindAsync(int.Parse(securityGroupId));
+      var securityGroup = await dbContext.SecurityGroups.FindAsync(MongoDB.Bson.ObjectId.Parse(securityGroupId));
       if (securityGroup is null)
       {
         return (null, new(Message: $"No security group found for the id: {securityGroupId}"));
@@ -171,6 +172,25 @@ public class ProfileService : IProfileService
       }
 
       return (webSite.ToModel(), null);
+    }
+    catch (Exception ex)
+    {
+      this.logger.LogError(ex, "Error, while fetching website from DB");
+      return (null, new(Message: ex.Message));
+    }
+  }
+
+  public async Task<(SecurityGroupRecord?, ProfileError?)> GetProfileBySecurityGroupId(string securityGroupId)
+  {
+    try
+    {
+      var securityGroup = await dbContext.SecurityGroups.FindAsync(MongoDB.Bson.ObjectId.Parse(securityGroupId));
+      if (securityGroup is null)
+      {
+        return (null, new(Message: $"No security group found for the id: {securityGroupId}"));
+      }
+
+      return (securityGroup, null);
     }
     catch (Exception ex)
     {

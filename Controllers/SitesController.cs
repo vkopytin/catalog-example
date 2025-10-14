@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services;
+using Utils;
 
 namespace Controllers;
 
@@ -29,6 +30,22 @@ public class SitesController : ControllerBase
 
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpGet]
+  [ActionName("profile")]
+  public async Task<IActionResult> Profile()
+  {
+    var securityGroupId = User.GetOid();
+    var (profile, err) = await this.profile.GetProfileBySecurityGroupId(securityGroupId);
+
+    if (profile is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(profile);
+  }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpGet]
   [ActionName("list")]
   public async Task<IActionResult> ListWebSites(int from = 0, int limit = 20)
   {
@@ -41,4 +58,22 @@ public class SitesController : ControllerBase
 
     return Ok(webSites);
   }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpPost]
+  [ActionName("select")]
+  public async Task<IActionResult> SelectWebSite([FromBody] SelectedWebSiteRequest request)
+  {
+    var securityGroupId = User.GetOid();
+    var (webSite, err) = await this.webSites.SelectWebSite(request.SiteId, securityGroupId);
+
+    if (webSite is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(webSite);
+  }
+
+  public record SelectedWebSiteRequest(Guid SiteId);
 }

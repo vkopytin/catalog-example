@@ -1,5 +1,6 @@
 using Models;
 using Errors;
+using Db.Records;
 
 namespace Services;
 
@@ -16,4 +17,5 @@ public interface IProfileService
   Task<(AuthUser?, ProfileError?)> SaveUser(AuthUser user);
 
   Task<(WebSiteModel?, ProfileError?)> GetUserWebSite(string securityGroupId);
+  Task<(SecurityGroupRecord?, ProfileError?)> GetProfileBySecurityGroupId(string securityGroupId);
 }

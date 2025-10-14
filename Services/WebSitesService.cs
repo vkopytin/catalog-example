@@ -39,4 +39,32 @@ public class WebSitesService : IWebSitesService
       return (null, new(Message: ex.Message));
     }
   }
+
+  public async Task<(WebSiteModel? webSite, ServiceError? err)> SelectWebSite(Guid siteId, string securityGroupId)
+  {
+    try
+    {
+      var site = await dbContext.WebSites.FindAsync(siteId);
+      var securityGroup = await dbContext.SecurityGroups.FindAsync(MongoDB.Bson.ObjectId.Parse(securityGroupId));
+      if (securityGroup is null)
+      {
+        return (null, new(Message: $"Security group with id: {securityGroupId} doesn't exist"));
+      }
+
+      securityGroup.SelectedSiteId = siteId;
+      await dbContext.SaveChangesAsync();
+
+      if (site is null)
+      {
+        return (null, new(Message: $"Site with id: {siteId} doesn't exist"));
+      }
+
+      return (site.ToModel(), null);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error, selecting webSite");
+      return (null, new(Message: ex.Message));
+    }
+  }
 }
