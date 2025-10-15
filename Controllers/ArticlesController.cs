@@ -86,13 +86,18 @@ public class ArticlesController : ControllerBase
   [ActionName("create")]
   public async Task<IActionResult> CreateArticle([FromBody] ArticleModel article)
   {
-    var securityGroupId = User.GetOid();
-    var webSite = await this.profile.GetUserWebSite(securityGroupId);
     var (createdArticle, err) = await this.articles.CreateArticle(article);
 
     if (createdArticle is null)
     {
       return BadRequest(err);
+    }
+
+    var securityGroupId = User.GetOid();
+    var (webSite, error) = await this.profile.GetUserWebSite(securityGroupId);
+    if (webSite is not null)
+    {
+      await this.profile.PublishArticleToWebSite(createdArticle, webSite);
     }
 
     return Ok(createdArticle);
@@ -108,13 +113,6 @@ public class ArticlesController : ControllerBase
     if (updatedArticle is null)
     {
       return BadRequest(err);
-    }
-
-    var securityGroupId = User.GetOid();
-    var (webSite, error) = await this.profile.GetUserWebSite(securityGroupId);
-    if (webSite is not null)
-    {
-      await this.profile.PublishArticleToWebSite(updatedArticle, webSite);
     }
 
     return Ok(updatedArticle);
