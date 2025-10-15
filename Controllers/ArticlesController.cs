@@ -84,8 +84,9 @@ public class ArticlesController : ControllerBase
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpPost]
   [ActionName("create")]
-  public async Task<IActionResult> CreateArticle([FromBody] ArticleModel article)
+  public async Task<IActionResult> CreateArticle([FromBody] CreateArticleRequest createArticle)
   {
+    ArticleModel article = createArticle.ToArticle();
     var (createdArticle, err) = await this.articles.CreateArticle(article);
 
     if (createdArticle is null)

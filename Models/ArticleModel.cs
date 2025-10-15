@@ -15,3 +15,21 @@ public record ArticleModel
   WebSiteModel[] WebSites,
   WebSiteArticleRecord[] WebSiteArticles
 );
+
+public static class ArticleModelExtensions
+{
+  public static ArticleModel ToArticle(this CreateArticleRequest model)
+  {
+    return new(
+      Id: model.Id,
+      Title: model.Title,
+      Description: model.Description,
+      CreatedAt: model.CreatedAt,
+      MediaId: model.MediaId,
+      Origin: model.Origin,
+      Media: model.Media,
+      Blocks: model.Blocks,
+      [], []
+    );
+  }
+}
