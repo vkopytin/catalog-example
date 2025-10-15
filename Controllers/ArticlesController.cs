@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Models;
 using Services;
 using Utils;
@@ -15,18 +16,21 @@ public class ArticlesController : ControllerBase
   private readonly IProfileService profile;
   private readonly IArticlesService articles;
   private readonly IWebSitesService webSites;
+  private readonly ILogger<ArticlesController> logger;
 
   public ArticlesController(
     AuthorizationTokensService authTokens,
     IProfileService profile,
     IArticlesService articles,
-    IWebSitesService webSites
+    IWebSitesService webSites,
+    ILogger<ArticlesController> logger
   )
   {
     this.authTokens = authTokens;
     this.profile = profile;
     this.articles = articles;
     this.webSites = webSites;
+    this.logger = logger;
   }
 
   [HttpGet]
@@ -96,6 +100,10 @@ public class ArticlesController : ControllerBase
 
     var securityGroupId = User.GetOid();
     var (webSite, error) = await this.profile.GetUserWebSite(securityGroupId);
+    if (error is not null)
+    {
+      this.logger.LogWarning("Error getting user website: {ErrorMessage}", error.Message);
+    }
     if (webSite is not null)
     {
       await this.profile.PublishArticleToWebSite(createdArticle, webSite);
