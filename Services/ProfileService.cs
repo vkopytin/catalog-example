@@ -180,6 +180,24 @@ public class ProfileService : IProfileService
     }
   }
 
+  public async Task<(SecurityGroupRecord?, ProfileError?)> GetPublicProfile()
+  {
+    try
+    {
+      var securityGroup = new SecurityGroupRecord
+      {
+        Id = MongoDB.Bson.ObjectId.GenerateNewId(),
+        SelectedSiteId = null
+      };
+      return (securityGroup, null);
+    }
+    catch (Exception ex)
+    {
+      this.logger.LogError(ex, "Error, while fetching public profile from DB");
+      return (null, new(Message: ex.Message));
+    }
+  }
+
   public async Task<(SecurityGroupRecord?, ProfileError?)> GetProfileBySecurityGroupId(string securityGroupId)
   {
     try

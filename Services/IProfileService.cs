@@ -18,5 +18,6 @@ public interface IProfileService
 
   Task<(WebSiteModel?, ProfileError?)> GetUserWebSite(string securityGroupId);
   Task<(SecurityGroupRecord?, ProfileError?)> GetProfileBySecurityGroupId(string securityGroupId);
+  Task<(SecurityGroupRecord?, ProfileError?)> GetPublicProfile();
   Task<(WebSiteArticleRecord?, ProfileError?)> PublishArticleToWebSite(ArticleModel article, WebSiteModel webSite);
 }

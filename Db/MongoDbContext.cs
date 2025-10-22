@@ -49,6 +49,7 @@ public class MongoDbContext : DbContext
     modelBuilder.Entity<WebSiteRecord>().HasOne(w => w.Parent).WithMany(w => w.SubSites).HasForeignKey(w => w.ParentId);
     modelBuilder.Entity<WebSiteArticleRecord>().HasOne(w => w.Article).WithMany(a => a.WebSiteArticles).HasForeignKey(w => w.ArticleId);
     modelBuilder.Entity<WebSiteArticleRecord>().HasOne(w => w.WebSite).WithMany(a => a.WebSiteArticles).HasForeignKey(w => w.WebSiteId);
+    modelBuilder.Entity<WebSiteArticleRecord>().Property(w => w.Id).IsRequired().ValueGeneratedOnAdd();
     modelBuilder.Entity<ArticleRecord>()
       .HasMany(a => a.WebSites)
       .WithMany(e => e.Articles)

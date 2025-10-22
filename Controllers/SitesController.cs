@@ -28,13 +28,17 @@ public class SitesController : ControllerBase
     return Ok(new { Test = "test" });
   }
 
+  [AllowAnonymous]
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpGet]
   [ActionName("profile")]
   public async Task<IActionResult> Profile()
   {
-    var securityGroupId = User.GetOid();
-    var (profile, err) = await this.profile.GetProfileBySecurityGroupId(securityGroupId);
+    var (securityGroupId, error) = User.GetOid();
+    var result = string.IsNullOrEmpty(securityGroupId) ? this.profile.GetPublicProfile()
+      : this.profile.GetProfileBySecurityGroupId(securityGroupId);
+
+    var (profile, err) = await result;
 
     if (profile is null)
     {
@@ -44,12 +48,17 @@ public class SitesController : ControllerBase
     return Ok(profile);
   }
 
+  [AllowAnonymous]
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpGet]
   [ActionName("list")]
   public async Task<IActionResult> ListWebSites(int from = 0, int limit = 20)
   {
-    var (webSites, err) = await this.webSites.ListWebSites(from, limit);
+    var (securityGroupId, error) = User.GetOid();
+    var result = string.IsNullOrEmpty(securityGroupId) ? this.webSites.ListPublicWebSites()
+     : this.webSites.ListWebSites(from, limit);
+
+    var (webSites, err) = await result;
 
     if (webSites is null)
     {
@@ -64,7 +73,7 @@ public class SitesController : ControllerBase
   [ActionName("select")]
   public async Task<IActionResult> SelectWebSite([FromBody] SelectedWebSiteRequest request)
   {
-    var securityGroupId = User.GetOid();
+    var securityGroupId = User.TryGetOid();
     var (webSite, err) = await this.webSites.SelectWebSite(request.SiteId, securityGroupId);
 
     if (webSite is null)

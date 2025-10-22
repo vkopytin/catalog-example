@@ -23,7 +23,7 @@ public class YoutubeApiController : ControllerBase
   [ActionName("list-subscriptions")]
   public async Task<IActionResult> ListSubscriptions([FromQuery] int from = 0, [FromQuery] int limit = 10)
   {
-    var openId = User.GetOid();
+    var openId = User.TryGetOid();
     var (result, err) = await youtubeApi.ListSubscriptions(openId, from, limit);
 
     if (result is null)
@@ -39,7 +39,7 @@ public class YoutubeApiController : ControllerBase
   [ActionName("list-channels")]
   public async Task<IActionResult> ListChannels([FromQuery] int from = 0, [FromQuery] int limit = 10)
   {
-    var openId = User.GetOid();
+    var openId = User.TryGetOid();
     var (result, err) = await youtubeApi.ListChannels(openId, from, limit);
 
     if (result is null)
@@ -55,7 +55,7 @@ public class YoutubeApiController : ControllerBase
   [ActionName("unsubscribe/[channelId]")]
   public async Task<IActionResult> Unsubscribe(string channelId)
   {
-    var openId = User.GetOid();
+    var openId = User.TryGetOid();
     var (result, err) = await youtubeApi.UnsubscribeChannel(openId, channelId);
 
     if (result is null)
@@ -71,7 +71,7 @@ public class YoutubeApiController : ControllerBase
   [ActionName("subscribe/[channelId]")]
   public async Task<IActionResult> Subscribe(string channelId)
   {
-    var openId = User.GetOid();
+    var openId = User.TryGetOid();
 
     var (result, err) = await youtubeApi.SubscribeChannel(openId, channelId);
 

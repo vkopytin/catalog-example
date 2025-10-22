@@ -17,6 +17,31 @@ public class WebSitesService : IWebSitesService
     this.dbContext = dbContext;
     this.logger = logger;
   }
+
+  public async Task<(WebSiteModel[]? articles, ServiceError? err)> ListPublicWebSites()
+  {
+    await Task.Delay(1);
+
+    try
+    {
+      var query = from sites in dbContext.WebSites.AsEnumerable()
+                  join parent in dbContext.WebSites on sites.ParentId equals parent.Id into parents
+                  from sub in parents.DefaultIfEmpty()
+                  where sites.ParentId == null || sites.Parent?.ParentId != null
+                  orderby sites.CreatedAt descending
+                  select sites;
+
+      var webSites = query.Select(s => s.ToModel()).ToArray();
+
+      return (webSites, null);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error, listing public webSites");
+      return (null, new(Message: ex.Message));
+    }
+  }
+
   public async Task<(WebSiteModel[]? articles, ServiceError? err)> ListWebSites(int skip = 0, int limit = 20)
   {
     await Task.Delay(1);

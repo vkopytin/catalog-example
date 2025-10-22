@@ -98,7 +98,7 @@ public class ArticlesController : ControllerBase
       return BadRequest(err);
     }
 
-    var securityGroupId = User.GetOid();
+    var securityGroupId = User.TryGetOid();
     var (webSite, error) = await this.profile.GetUserWebSite(securityGroupId);
     if (error is not null)
     {
