@@ -25,4 +25,9 @@ public static class GenericExtentions
 
     return (oid, null);
   }
+
+  public static Task<(T? result, Y? error)> AsResult<T, Y>(this (T? result, Y? error) tuple)
+  {
+    return Task.FromResult(tuple);
+  }
 }

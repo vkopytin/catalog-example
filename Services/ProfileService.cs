@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver.Linq;
 using Db.Records;
+using Utils;
 
 namespace Services;
 
@@ -180,7 +181,7 @@ public class ProfileService : IProfileService
     }
   }
 
-  public async Task<(SecurityGroupRecord?, ProfileError?)> GetPublicProfile()
+  public Task<(SecurityGroupRecord?, ProfileError?)> GetPublicProfile()
   {
     try
     {
@@ -189,12 +190,12 @@ public class ProfileService : IProfileService
         Id = MongoDB.Bson.ObjectId.GenerateNewId(),
         SelectedSiteId = null
       };
-      return (securityGroup, null);
+      return (securityGroup, default(ProfileError?)).AsResult();
     }
     catch (Exception ex)
     {
       this.logger.LogError(ex, "Error, while fetching public profile from DB");
-      return (null, new(Message: ex.Message));
+      return (default(SecurityGroupRecord?), new ProfileError(Message: ex.Message)).AsResult();
     }
   }
 

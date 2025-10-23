@@ -41,6 +41,10 @@ internal class IdmAccessTokenAuthSchemeHandler : AuthenticationHandler<IdmAccess
     {
       var inter = await response.Content.ReadAsStringAsync();
       var userInfo = JsonSerializer.Deserialize<Dictionary<string, string>>(inter);
+      if (userInfo is null)
+      {
+        return AuthenticateResult.Fail("Authentication failed - cannot parse user info");
+      }
       // Read the token from request headers/cookies
       // Check that it's a valid session, depending on your implementation
 
