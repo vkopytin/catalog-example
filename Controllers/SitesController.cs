@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Models;
 using Services;
 using Utils;
 
@@ -69,6 +70,22 @@ public class SitesController : ControllerBase
   }
 
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpPut]
+  [ActionName("{siteId}")]
+  public async Task<IActionResult> UpdateWebSite([FromRoute] Guid siteId, [FromBody] WebSiteModel webSite)
+  {
+    var (updatedWebSite, err) = await this.webSites.UpdateWebSiteById(siteId, webSite);
+
+    if (updatedWebSite is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(updatedWebSite);
+  }
+
+  public record SelectedWebSiteRequest(Guid SiteId);
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpPost]
   [ActionName("select")]
   public async Task<IActionResult> SelectWebSite([FromBody] SelectedWebSiteRequest request)
@@ -84,5 +101,28 @@ public class SitesController : ControllerBase
     return Ok(webSite);
   }
 
-  public record SelectedWebSiteRequest(Guid SiteId);
+  public record ParentWebSiteRequest(Guid? ParentId);
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpPost]
+  [ActionName("{siteId}/set-parent")]
+  public async Task<IActionResult> SetParentWebSite([FromRoute] Guid siteId, [FromBody] ParentWebSiteRequest request)
+  {
+    var securityGroupId = User.TryGetOid();
+    if (request.ParentId.HasValue)
+    {
+      var (parentWebSite, errParent) = await this.webSites.GetWebSiteById(request.ParentId.Value);
+      if (parentWebSite is null)
+      {
+        return BadRequest(errParent);
+      }
+    }
+    var (webSite, err) = await this.webSites.SetParent(siteId, request.ParentId);
+
+    if (webSite is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(webSite);
+  }
 }

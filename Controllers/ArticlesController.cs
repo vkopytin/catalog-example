@@ -112,18 +112,44 @@ public class ArticlesController : ControllerBase
     return Ok(createdArticle);
   }
 
-  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-  [HttpPut]
-  [ActionName("{id}")]
-  public async Task<IActionResult> UpdateArticle(Guid id, [FromBody] ArticleModel article)
-  {
-    var (updatedArticle, err) = await this.articles.UpdateArticle(id, article);
-
-    if (updatedArticle is null)
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpPut]
+    [ActionName("{id}")]
+    public async Task<IActionResult> UpdateArticle(Guid id, [FromBody] ArticleModel article)
     {
-      return BadRequest(err);
+        var (updatedArticle, err) = await this.articles.UpdateArticle(id, article);
+
+        if (updatedArticle is null)
+        {
+            return BadRequest(err);
+        }
+
+        return Ok(updatedArticle);
     }
 
-    return Ok(updatedArticle);
-  }
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpPost]
+    [ActionName("publish-to-website")]
+    public async Task<IActionResult> PublishArticleToWebSite(string articleId, string webSiteId)
+    {
+        var (article, errArticle) = await this.articles.GetArticle(Guid.Parse(articleId));
+        if (article is null)
+        {
+            return BadRequest(errArticle);
+        }
+        var (webSite, errWebSite) = await this.webSites.GetWebSiteById(Guid.Parse(webSiteId));
+        if (webSite is null)
+        {
+            return BadRequest(errWebSite);
+        }
+
+        var (publishedArticle, err) = await this.profile.PublishArticleToWebSite(article, webSite);
+
+        if (publishedArticle is null)
+        {
+            return BadRequest(err);
+        }
+
+        return Ok(publishedArticle);
+    }
 }

@@ -65,6 +65,32 @@ public class WebSitesService : IWebSitesService
     }
   }
 
+  public async Task<(WebSiteModel? webSite, ServiceError? err)> UpdateWebSiteById(Guid siteId, WebSiteModel webSite)
+  {
+    try
+    {
+      var existingSite = await dbContext.WebSites.FindAsync(siteId);
+      if (existingSite is null)
+      {
+        return (null, new(Message: $"Site with id: {siteId} doesn't exist"));
+      }
+
+      existingSite.Name = webSite.Name ?? existingSite.Name;
+      existingSite.HostName = webSite.HostName ?? existingSite.HostName;
+      existingSite.AltHostName = webSite.AltHostName ?? existingSite.AltHostName;
+      existingSite.ParentId = webSite.ParentId ?? existingSite.ParentId;
+
+      await dbContext.SaveChangesAsync();
+
+      return (existingSite.ToModel(), null);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error, updating webSite");
+      return (null, new(Message: ex.Message));
+    }
+  }
+
   public async Task<(WebSiteModel? webSite, ServiceError? err)> SelectWebSite(Guid siteId, string securityGroupId)
   {
     try
@@ -89,6 +115,56 @@ public class WebSitesService : IWebSitesService
     catch (Exception ex)
     {
       logger.LogError(ex, "Error, selecting webSite");
+      return (null, new(Message: ex.Message));
+    }
+  }
+
+  public async Task<(WebSiteModel? webSite, ServiceError? err)> GetWebSiteById(Guid siteId)
+  {
+    try
+    {
+      var site = await dbContext.WebSites.FindAsync(siteId);
+      if (site is null)
+      {
+        return (null, new(Message: $"Site with id: {siteId} doesn't exist"));
+      }
+
+      return (site.ToModel(), null);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error, getting webSite by id");
+      return (null, new(Message: ex.Message));
+    }
+  }
+
+  public async Task<(WebSiteModel? webSite, ServiceError? err)> SetParent(Guid siteId, Guid? parentId)
+  {
+    try
+    {
+      var site = await dbContext.WebSites.FindAsync(siteId);
+      if (site is null)
+      {
+        return (null, new(Message: $"Site with id: {siteId} doesn't exist"));
+      }
+
+      if (parentId.HasValue)
+      {
+        var parentSite = await dbContext.WebSites.FindAsync(parentId);
+        if (parentSite is null)
+        {
+          return (null, new(Message: $"Parent site with id: {parentId} doesn't exist"));
+        }
+      }
+
+      site.ParentId = parentId;
+      await dbContext.SaveChangesAsync();
+
+      return (site.ToModel(), null);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error, setting parent webSite");
       return (null, new(Message: ex.Message));
     }
   }
