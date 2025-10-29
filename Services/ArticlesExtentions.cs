@@ -16,8 +16,7 @@ public static class ArticlesExtentions
       Origin: record.Origin,
       Media: record.Media?.ToModel(),
       Blocks: [.. record.Blocks.Select(b => b.ToModel())],
-      WebSites: [.. record.WebSites.Select(w => w.ToModel())],
-      WebSiteArticles: []
+      WebSites: [.. record.WebSites.Select(w => w.ToModel())]
     );
   }
 

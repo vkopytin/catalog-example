@@ -12,8 +12,7 @@ public record ArticleModel
   string? Origin,
   ArticleBlockModel? Media,
   ICollection<ArticleBlockModel> Blocks,
-  ICollection<WebSiteModel> WebSites,
-  ICollection<WebSiteArticleRecord> WebSiteArticles
+  ICollection<WebSiteModel> WebSites
 );
 
 public static class ArticleModelExtensions
@@ -29,7 +28,7 @@ public static class ArticleModelExtensions
       Origin: model.Origin,
       Media: model.Media,
       Blocks: model.Blocks,
-      [], []
+      []
     );
   }
 }
