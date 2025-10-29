@@ -27,8 +27,8 @@ public class ArticlesService : IArticlesService
       join m in dbContext.ArticleBlocks on a.MediaId equals m.Id into mleft
       from sub in mleft.DefaultIfEmpty()
       orderby a.CreatedAt descending
-      select a.ToModel();
-    var articles = query.Skip(skip).Take(limit).ToArray();
+      select a;
+    var articles = query.Skip(skip).Take(limit).Select(a => a.ToModel()).ToArray();
 
     return (articles, null);
   }
@@ -132,6 +132,10 @@ public class ArticlesService : IArticlesService
       from a in dbContext.Articles.AsEnumerable()
       join m in dbContext.ArticleBlocks on a.MediaId equals m.Id into mleft
       from sub in mleft.DefaultIfEmpty()
+      join s in dbContext.WebSiteArticles on a.Id equals s.ArticleId into wsleft
+      from wssub in wsleft.DefaultIfEmpty()
+      join w in dbContext.WebSites on wssub?.WebSiteId equals w.Id into wleft
+      from wsub in wleft.DefaultIfEmpty()
       where a.Id == id
       select a;
 

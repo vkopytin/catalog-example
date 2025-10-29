@@ -12,8 +12,8 @@ public record ArticleModel
   string? Origin,
   ArticleBlockModel? Media,
   ICollection<ArticleBlockModel> Blocks,
-  WebSiteModel[] WebSites,
-  WebSiteArticleRecord[] WebSiteArticles
+  ICollection<WebSiteModel> WebSites,
+  ICollection<WebSiteArticleRecord> WebSiteArticles
 );
 
 public static class ArticleModelExtensions
