@@ -1,5 +1,6 @@
 using Db;
 using Errors;
+using Microsoft.EntityFrameworkCore;
 using Models;
 using MongoDB.Driver.Linq;
 
@@ -31,6 +32,31 @@ public class ArticleBlocksService : IArticleBlocksService
     var block = await dbContext.ArticleBlocks.FindAsync(blockId);
 
     return (block?.ToModel(), null);
+  }
+
+  public async Task<(ArticleBlockModel? block, ServiceError? err)> CreateArticleBlock(ArticleBlockModel block)
+  {
+    if (block is null)
+    {
+      return (null, new ServiceError("Can't create article block. Invalid data provided."));
+    }
+
+    var lastMediaId = await this.dbContext.ArticleBlocks.Select(b => b.Id).MaxAsync();
+    var record = (block with { Id = lastMediaId + 1 }).ToRecord();
+    record.Assign(block);
+    record.CreatedAt = DateTime.UtcNow;
+
+    var res = await dbContext.ArticleBlocks.AddAsync(record);
+    await dbContext.SaveChangesAsync();
+
+    record = await dbContext.ArticleBlocks.FindAsync(res.Entity.Id);
+
+    if (record is null)
+    {
+      return (null, new ServiceError($"Create error. No block with the id ({res.Entity.Id}) was found"));
+    }
+
+    return (record.ToModel(), null);
   }
 
   public async Task<(ArticleBlockModel? block, ServiceError? err)> UpdateArticleBlock(int id, ArticleBlockModel block)

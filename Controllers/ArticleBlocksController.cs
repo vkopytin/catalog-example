@@ -47,6 +47,21 @@ public class ArticleBlocksController : ControllerBase
   }
 
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpPost]
+  [ActionName("create")]
+  public async Task<IActionResult> CreateArticleBlock([FromBody] Models.ArticleBlockModel block)
+  {
+    var (created, err) = await articleBlocks.CreateArticleBlock(block);
+
+    if (created is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Created($"{created.Id}", created);
+  }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpPut]
   [ActionName("{id}")]
   public async Task<IActionResult> UpdateArticleBlock([FromRoute] int id, [FromBody] Models.ArticleBlockModel block)
