@@ -28,7 +28,7 @@ public static class ArticleModelExtensions
       Origin: model.Origin,
       Media: model.Media,
       Blocks: model.Blocks,
-      []
+      WebSites: []
     );
   }
 }

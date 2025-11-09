@@ -114,8 +114,8 @@ public class ArticlesController : ControllerBase
 
   [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpPost]
-  [ActionName("publish-to-website")]
-  public async Task<IActionResult> PublishArticleToWebSite(string articleId, string webSiteId)
+  [ActionName("{articleId}/publish/{webSiteId}")]
+  public async Task<IActionResult> PublishArticleToWebSite([FromRoute] string articleId, [FromRoute] string webSiteId)
   {
     var (article, errArticle) = await this.articles.GetArticle(Guid.Parse(articleId));
     if (article is null)
@@ -135,6 +135,12 @@ public class ArticlesController : ControllerBase
       return BadRequest(err);
     }
 
-    return Ok(publishedArticle);
+    (article, errArticle) = await this.articles.GetArticle(Guid.Parse(articleId));
+    if (errArticle is not null)
+    {
+      this.logger.LogWarning("Error getting article after publishing: {ErrorMessage}", errArticle.Message);
+    }
+
+    return Ok(article);
   }
 }
