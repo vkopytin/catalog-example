@@ -181,25 +181,27 @@ public class ProfileService : IProfileService
     }
   }
 
-  public Task<(SecurityGroupRecord?, ProfileError?)> GetPublicProfile()
+  public Task<(UserProfileModel?, ProfileError?)> GetPublicProfile()
   {
     try
     {
-      var securityGroup = new SecurityGroupRecord
-      {
-        Id = MongoDB.Bson.ObjectId.GenerateNewId(),
-        SelectedSiteId = null
-      };
+      var securityGroup = new UserProfileModel(
+        Id: MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+        UserName: "Account",
+        GroupName: "Public",
+        FullName: string.Empty,
+        SelectedSiteId: null
+      );
       return (securityGroup, default(ProfileError?)).AsResult();
     }
     catch (Exception ex)
     {
       this.logger.LogError(ex, "Error, while fetching public profile from DB");
-      return (default(SecurityGroupRecord?), new ProfileError(Message: ex.Message)).AsResult();
+      return (default(UserProfileModel?), new ProfileError(Message: ex.Message)).AsResult();
     }
   }
 
-  public async Task<(SecurityGroupRecord?, ProfileError?)> GetProfileBySecurityGroupId(string securityGroupId)
+  public async Task<(UserProfileModel?, ProfileError?)> GetProfileBySecurityGroupId(string securityGroupId)
   {
     try
     {
@@ -209,7 +211,19 @@ public class ProfileService : IProfileService
         return (null, new(Message: $"No security group found for the id: {securityGroupId}"));
       }
 
-      return (securityGroup, null);
+      var profile = await dbContext.Users.Where(u => u.UserName == securityGroup.GroupName)
+        .Take(1)
+        .FirstOrDefaultAsync();
+
+      var userProfile = new UserProfileModel(
+        Id: securityGroup.Id.ToString(),
+        UserName: securityGroup.GroupName,
+        GroupName: securityGroup.GroupName,
+        FullName: profile?.Name ?? securityGroup.GroupName,
+        SelectedSiteId: securityGroup.SelectedSiteId
+      );
+
+      return (userProfile, null);
     }
     catch (Exception ex)
     {
