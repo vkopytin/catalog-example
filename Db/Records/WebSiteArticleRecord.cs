@@ -13,5 +13,4 @@ public class WebSiteArticleRecord : BaseEntity<int>
 
   public virtual WebSiteRecord WebSite { get; set; }
   public virtual ArticleRecord Article { get; set; }
-
 }

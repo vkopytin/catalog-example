@@ -143,4 +143,36 @@ public class ArticlesController : ControllerBase
 
     return Ok(article);
   }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [HttpPost]
+  [ActionName("{articleId}/unpublish/{webSiteId}")]
+  public async Task<IActionResult> UnpublishArticleFromWebSite([FromRoute] string articleId, [FromRoute] string webSiteId)
+  {
+    var (article, errArticle) = await this.articles.GetArticle(Guid.Parse(articleId));
+    if (article is null)
+    {
+      return BadRequest(errArticle);
+    }
+    var (webSite, errWebSite) = await this.webSites.GetWebSiteById(Guid.Parse(webSiteId));
+    if (webSite is null)
+    {
+      return BadRequest(errWebSite);
+    }
+
+    var (unpublishedArticle, err) = await this.profile.UnpublishArticleFromWebSite(article, webSite);
+
+    if (unpublishedArticle is null)
+    {
+      return BadRequest(err);
+    }
+
+    (article, errArticle) = await this.articles.GetArticle(Guid.Parse(articleId));
+    if (errArticle is not null)
+    {
+      this.logger.LogWarning("Error getting article after unpublishing: {ErrorMessage}", errArticle.Message);
+    }
+
+    return Ok(article);
+  }
 }

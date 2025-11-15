@@ -42,6 +42,8 @@ public class MongoDbContext : DbContext
     modelBuilder.Entity<YoutubeChannelRecord>().ToCollection("youtubeChannels");
     modelBuilder.Entity<SecurityGroupRecord>().ToCollection("securityGroups");
 
+    modelBuilder.Entity<WebSiteArticleRecord>().HasQueryFilter(w => w.DeletedAt == null);
+
     modelBuilder.Entity<ArticleRecord>().HasOne(a => a.Media);
     modelBuilder.Entity<ArticleRecord>().HasMany(a => a.Blocks).WithOne(b => b.Article).HasForeignKey(b => b.ArticleId);
     modelBuilder.Entity<ArticleRecord>().HasMany(a => a.WebSiteArticles).WithOne(w => w.Article).HasForeignKey(w => w.ArticleId);

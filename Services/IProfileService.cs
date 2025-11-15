@@ -20,4 +20,5 @@ public interface IProfileService
   Task<(UserProfileModel?, ProfileError?)> GetProfileBySecurityGroupId(string securityGroupId);
   Task<(UserProfileModel?, ProfileError?)> GetPublicProfile();
   Task<(WebSiteArticleRecord?, ProfileError?)> PublishArticleToWebSite(ArticleModel article, WebSiteModel webSite);
+  Task<(WebSiteArticleRecord?, ProfileError?)> UnpublishArticleFromWebSite(ArticleModel article, WebSiteModel webSite);
 }

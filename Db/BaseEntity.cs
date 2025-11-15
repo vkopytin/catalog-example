@@ -18,5 +18,6 @@ public abstract class BaseEntity<T> : IBaseEntity<T>
   }
 
   public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+  public DateTime? DeletedAt { get; set; }
 }
 

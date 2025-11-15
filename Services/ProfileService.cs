@@ -242,7 +242,7 @@ public class ProfileService : IProfileService
         return (null, new(Message: $"No website found for the id: {webSite.Id}"));
       }
 
-      var existing = await dbContext.WebSiteArticles.Where(a => a.WebSiteId == webSite.Id && a.ArticleId == article.Id)
+      var existing = await dbContext.WebSiteArticles.IgnoreQueryFilters().Where(a => a.WebSiteId == webSite.Id && a.ArticleId == article.Id)
         .Take(1)
         .FirstOrDefaultAsync();
 
@@ -257,15 +257,56 @@ public class ProfileService : IProfileService
         };
 
         await dbContext.WebSiteArticles.AddAsync(siteArticle);
-        await dbContext.SaveChangesAsync();
+
         return (siteArticle, null);
       }
+
+      if (existing.DeletedAt is not null)
+      {
+        existing.DeletedAt = null;
+        dbContext.WebSiteArticles.Update(existing);
+      }
+
+      await dbContext.SaveChangesAsync();
 
       return (existing, null);
     }
     catch (Exception ex)
     {
       this.logger.LogError(ex, "Error, while publishing article to website");
+      return (null, new(Message: ex.Message));
+    }
+  }
+
+  public async Task<(WebSiteArticleRecord?, ProfileError?)> UnpublishArticleFromWebSite(ArticleModel article, WebSiteModel webSite)
+  {
+    try
+    {
+      var site = await dbContext.WebSites.FindAsync(webSite.Id);
+      if (site is null)
+      {
+        return (null, new(Message: $"No website found for the id: {webSite.Id}"));
+      }
+
+      var existing = await dbContext.WebSiteArticles.Where(a => a.WebSiteId == webSite.Id && a.ArticleId == article.Id)
+        .Take(1)
+        .FirstOrDefaultAsync();
+
+      if (existing is not null)
+      {
+        existing.DeletedAt = DateTime.UtcNow;
+        dbContext.WebSiteArticles.Update(existing);
+
+        await dbContext.SaveChangesAsync();
+
+        return (existing, null);
+      }
+
+      return (null, new(Message: "No published article found to unpublish."));
+    }
+    catch (Exception ex)
+    {
+      this.logger.LogError(ex, "Error, while unpublishing article from website");
       return (null, new(Message: ex.Message));
     }
   }
