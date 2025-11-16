@@ -276,15 +276,17 @@ public class ProfileService : IProfileService
 
       if (existing is null)
       {
-        var newIntId = await this.dbContext.WebSiteArticles.Select(a => a.Id).MaxAsync() + 1;
+        var maxKeyId = await this.dbContext.WebSiteArticles.OrderByDescending(a => a.Id).Select(a => a.Id).FirstAsync();
         var siteArticle = new WebSiteArticleRecord
         {
-          Id = newIntId,
+          Id = maxKeyId + 1,
           WebSiteId = webSite.Id,
           ArticleId = article.Id,
         };
 
         await dbContext.WebSiteArticles.AddAsync(siteArticle);
+
+        await dbContext.SaveChangesAsync();
 
         return (siteArticle, null);
       }
@@ -293,9 +295,9 @@ public class ProfileService : IProfileService
       {
         existing.DeletedAt = null;
         dbContext.WebSiteArticles.Update(existing);
-      }
 
-      await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
+      }
 
       return (existing, null);
     }
