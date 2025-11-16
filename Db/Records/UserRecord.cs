@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -14,4 +15,7 @@ public class UserRecord
   public string? Role { get; set; }
   public bool IsActive { get; set; }
   public string? Password { get; set; }
+  public MongoDB.Bson.ObjectId? SecurityGroupId { get; set; }
+  [ForeignKey("SecurityGroupId")]
+  public SecurityGroupRecord? SecurityGroup { get; set; }
 }

@@ -1,3 +1,5 @@
+using Db.Records;
+
 namespace Models;
 
 public record UserProfileModel(
@@ -5,5 +7,7 @@ public record UserProfileModel(
   string UserName,
   string GroupName,
   string FullName,
-  Guid? SelectedSiteId
+  Guid? SelectedSiteId,
+  string OwnSiteId = "",
+  string UserId = ""
 );

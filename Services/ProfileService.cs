@@ -190,7 +190,9 @@ public class ProfileService : IProfileService
         UserName: "Account",
         GroupName: "Public",
         FullName: string.Empty,
-        SelectedSiteId: null
+        SelectedSiteId: null,
+        OwnSiteId: string.Empty,
+        UserId: string.Empty
       );
       return (securityGroup, default(ProfileError?)).AsResult();
     }
@@ -211,16 +213,33 @@ public class ProfileService : IProfileService
         return (null, new(Message: $"No security group found for the id: {securityGroupId}"));
       }
 
-      var profile = await dbContext.Users.Where(u => u.UserName == securityGroup.GroupName)
+      var profile = await dbContext.Users.Where(u => u.SecurityGroupId == securityGroup.Id)
         .Take(1)
         .FirstOrDefaultAsync();
+
+      var webSite = default(WebSiteRecord?);
+
+      if (profile is not null)
+      {
+        if (securityGroup.GroupName != profile.UserName)
+        {
+          logger.LogWarning("Security group name '{GroupName}' doesn't match profile name '{ProfileName}'", securityGroup.GroupName, profile.Name);
+        }
+
+        webSite = await dbContext.WebSites
+          .Where(w => w.UserId == profile.Id)
+          .Take(1)
+          .FirstOrDefaultAsync();
+      }
 
       var userProfile = new UserProfileModel(
         Id: securityGroup.Id.ToString(),
         UserName: securityGroup.GroupName,
         GroupName: securityGroup.GroupName,
         FullName: profile?.Name ?? securityGroup.GroupName,
-        SelectedSiteId: securityGroup.SelectedSiteId
+        SelectedSiteId: securityGroup.SelectedSiteId,
+        OwnSiteId: webSite?.Id.ToString() ?? string.Empty,
+        UserId: profile?.Id.ToString() ?? string.Empty
       );
 
       return (userProfile, null);

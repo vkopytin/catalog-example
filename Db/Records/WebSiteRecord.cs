@@ -7,6 +7,7 @@ namespace Db.Records;
 public class WebSiteRecord : BaseEntity<Guid>
 {
   public Guid? ParentId { get; set; }
+  [ForeignKey("ParentId")]
   public WebSiteRecord? Parent { get; set; }
   public string? Name { get; set; }
   public string? HostName { get; set; }
