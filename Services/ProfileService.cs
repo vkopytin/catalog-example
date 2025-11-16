@@ -162,8 +162,17 @@ public class ProfileService : IProfileService
         return (null, new(Message: $"No security group found for the id: {securityGroupId}"));
       }
 
+      var user = await dbContext.Users.Where(u => u.SecurityGroupId == securityGroup.Id)
+        .Take(1)
+        .FirstOrDefaultAsync();
+
+      if (user is null)
+      {
+        return (null, new(Message: $"No user found for the security group id: {securityGroupId}"));
+      }
+
       var webSite = await dbContext.WebSites
-        .Where(w => w.Id == securityGroup.SelectedSiteId)
+        .Where(w => w.UserId == user.Id)
         .Take(1)
         .FirstOrDefaultAsync();
 
