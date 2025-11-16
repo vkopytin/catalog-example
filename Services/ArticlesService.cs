@@ -18,19 +18,63 @@ public class ArticlesService : IArticlesService
     this.dbContext = dbContext;
   }
 
-  public async Task<(ArticleModel[]? articles, ServiceError? err)> ListArticles(int skip = 0, int limit = 20)
+  public async Task<(ArticleModel[]? articles, ServiceError? err)> ListOwnArticles(string securityGroupId, int skip = 0, int limit = 20)
   {
-    await Task.Delay(1);
+    var user = await this.dbContext.Users.FirstOrDefaultAsync(u => u.SecurityGroupId == MongoDB.Bson.ObjectId.Parse(securityGroupId));
+    if (user is null)
+    {
+      return ([], null);
+    }
+
+    var webSiteIdsQuery = from a in this.dbContext.WebSites.AsEnumerable()
+                          join parent in dbContext.WebSites on a.ParentId equals parent.Id into parents
+                          where a.UserId == user.Id
+                          select a;
+    var webSites = webSiteIdsQuery.ToArray();
+    var webSiteIds = new List<Guid>();
+    foreach (var site in webSites)
+    {
+      var webSite = site;
+      while (webSite is not null)
+      {
+        webSiteIds.Add(webSite.Id);
+        if (webSite.ParentId is null)
+        {
+          break;
+        }
+        webSite = webSites.FirstOrDefault(s => s.Id == webSite.ParentId);
+      }
+    }
 
     var query
     = from a in dbContext.Articles.AsEnumerable()
       join m in dbContext.ArticleBlocks on a.MediaId equals m.Id into mleft
       from sub in mleft.DefaultIfEmpty()
+      where webSiteIds.Contains(
+        (from wsa in dbContext.WebSiteArticles.AsEnumerable()
+         where wsa.ArticleId == a.Id
+         select wsa.WebSiteId).FirstOrDefault()
+      )
       orderby a.CreatedAt descending
       select a;
     var articles = query.Skip(skip).Take(limit).Select(a => a.ToModel()).ToArray();
 
     return (articles, null);
+  }
+
+  public Task<(ArticleModel[]? articles, ServiceError? err)> ListArticlesBySiteId(Guid siteId, int from = 0, int limit = 20)
+  {
+    var query
+    = from a in dbContext.Articles.AsEnumerable()
+      join m in dbContext.ArticleBlocks on a.MediaId equals m.Id into mleft
+      from sub in mleft.DefaultIfEmpty()
+      join wsa in dbContext.WebSiteArticles on a.Id equals wsa.ArticleId
+      where wsa.WebSiteId == siteId
+      orderby a.CreatedAt descending
+      select a;
+    var articles = query.Skip(from).Take(limit).Select(a => a.ToModel()).ToArray();
+
+    return Task.FromResult<(ArticleModel[]? articles, ServiceError? err)>((articles, null));
   }
 
   public async Task<(ArticleModel? article, ServiceError? err)> GetArticle(Guid id)

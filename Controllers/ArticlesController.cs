@@ -45,7 +45,42 @@ public class ArticlesController : ControllerBase
   [ActionName("list")]
   public async Task<IActionResult> ListArticles(int from = 0, int limit = 20)
   {
-    var (articles, err) = await this.articles.ListArticles(from, limit);
+    var (securityGroupId, oidErr) = User.GetOid();
+    var (profile, _) = await this.profile.GetProfileBySecurityGroupId(securityGroupId);
+    if (profile is null)
+    {
+      var (ownArticles, ownErr) = await this.articles.ListOwnArticles(securityGroupId, from, limit);
+      if (ownArticles is null)
+      {
+        return BadRequest(ownErr);
+      }
+
+      return Ok(ownArticles);
+    }
+
+    var ownSiteId = profile?.OwnSiteId;
+    if (ownSiteId is null)
+    {
+      return Ok(Array.Empty<ArticleModel>());
+    }
+
+    var (articles, err) = await this.articles.ListArticlesBySiteId(ownSiteId.Value, from, limit);
+
+    if (articles is null)
+    {
+      return BadRequest(err);
+    }
+
+    return Ok(articles);
+  }
+
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+  [AllowAnonymous]
+  [HttpGet]
+  [ActionName("list/{siteId}")]
+  public async Task<IActionResult> ListArticlesBySiteId([FromRoute] Guid siteId, int from = 0, int limit = 20)
+  {
+    var (articles, err) = await this.articles.ListArticlesBySiteId(siteId, from, limit);
 
     if (articles is null)
     {

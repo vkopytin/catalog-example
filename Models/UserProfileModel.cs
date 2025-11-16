@@ -8,6 +8,6 @@ public record UserProfileModel(
   string GroupName,
   string FullName,
   Guid? SelectedSiteId,
-  string OwnSiteId = "",
+  Guid? OwnSiteId,
   string UserId = ""
 );

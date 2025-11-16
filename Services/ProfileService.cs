@@ -200,7 +200,7 @@ public class ProfileService : IProfileService
         GroupName: "Public",
         FullName: string.Empty,
         SelectedSiteId: null,
-        OwnSiteId: string.Empty,
+        OwnSiteId: null,
         UserId: string.Empty
       );
       return (securityGroup, default(ProfileError?)).AsResult();
@@ -247,7 +247,7 @@ public class ProfileService : IProfileService
         GroupName: securityGroup.GroupName,
         FullName: profile?.Name ?? securityGroup.GroupName,
         SelectedSiteId: securityGroup.SelectedSiteId,
-        OwnSiteId: webSite?.Id.ToString() ?? string.Empty,
+        OwnSiteId: webSite?.Id,
         UserId: profile?.Id.ToString() ?? string.Empty
       );
 
