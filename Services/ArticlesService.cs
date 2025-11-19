@@ -147,6 +147,12 @@ public class ArticlesService : IArticlesService
         record.MediaId = media?.Id ?? 0;
       }
     }
+    else if (article.Media is not null)
+    {
+      var mediaRecord = article.Media.ToRecord();
+      this.dbContext.ArticleBlocks.Update(mediaRecord);
+      await this.dbContext.SaveChangesAsync();
+    }
 
     record.UpdatedAt = DateTime.UtcNow;
 
