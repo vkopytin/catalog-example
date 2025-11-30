@@ -39,6 +39,9 @@ builder.Services.AddCors(options =>
       ;
   });
 });
+builder.Services.AddSingleton(p => p.GetRequiredService<IConfiguration>()
+  .Get<MainSettings>() ?? throw new Exception("appsettings are missing")
+);
 builder.Services.AddSingleton(p => p.GetRequiredService<IConfiguration>().GetSection("JobsOnDemand")
   .Get<JobsOnDemand>() ?? throw new Exception("appsetings missing JobsOnDemand section")
 );
@@ -50,6 +53,7 @@ builder.Services.AddTransient(o =>
 {
   return new MongoDbContext(client);
 });
+builder.Services.AddSingleton<IDbConnectionFactory, NpgsqlDbConnectionFactory>();
 builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<IArticlesService, ArticlesService>();
 builder.Services.AddTransient<IArticleBlocksService, ArticleBlocksService>();

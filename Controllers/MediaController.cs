@@ -50,4 +50,18 @@ public class MediaController : ControllerBase
       return BadRequest(new { Error = $"Failed to trigger WebJob. Status code: {response.StatusCode}" });
     }
   }
+
+  [HttpGet]
+  [ActionName("documents")]
+  public async Task<IActionResult> GetDocument([FromRoute(Name = "id")] Guid documentId)
+  {
+    var (res, error) = await this.mediaLibrary.GetDocument(documentId);
+    if (res is null)
+    {
+      return NotFound(new { Error = error?.Message ?? "Document not found" });
+    }
+
+    Response.Headers.Append("content-disposition", $"inline; filename={res.FileName}");
+    return new FileStreamResult(new MemoryStream(res.Data), res.ContentType);
+  }
 }
