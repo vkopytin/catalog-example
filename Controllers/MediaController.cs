@@ -24,6 +24,7 @@ public class MediaController : ControllerBase
     this.mediaLibrary = mediaLibrary;
   }
 
+  [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
   [HttpPost("upload")]
   [ActionName("block")]
   public async Task<IActionResult> BlockUpload([FromRoute(Name = "id")] int blockId, IFormCollection formData)
