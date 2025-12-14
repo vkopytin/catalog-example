@@ -276,7 +276,7 @@ public class ProfileService : IProfileService
 
       if (existing is null)
       {
-        var maxKeyId = await this.dbContext.WebSiteArticles.OrderByDescending(a => a.Id).Select(a => a.Id).FirstAsync();
+        var maxKeyId = await this.dbContext.WebSiteArticles.IgnoreQueryFilters().OrderByDescending(a => a.Id).Select(a => a.Id).FirstAsync();
         var siteArticle = new WebSiteArticleRecord
         {
           Id = maxKeyId + 1,
