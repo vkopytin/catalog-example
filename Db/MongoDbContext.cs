@@ -104,7 +104,12 @@ public class MongoDbContext : DbContext
              {{ $text: {{ $search: ""{search}"", $caseSensitive: false, $diacriticSensitive: false }} }}
         ]
         }}");
-        var result = collection.Find(filter).Skip(skip).Limit(limit).ToList();
+        var query = collection.Find(filter);
+        if (string.IsNullOrEmpty(search))
+        {
+            query = query.Sort("{ CreatedAt: -1 }");
+        }
+        var result = query.Skip(skip).Limit(limit).ToList();
 
         return result;
     }
