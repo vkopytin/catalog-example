@@ -30,10 +30,11 @@ public class WordBookController : ControllerBase
         return Ok(words);
     }
 
+    public record AddEntryRequest(string En, string De);
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost]
     [ActionName("add")]
-    public async Task<IActionResult> CreateEntry([FromBody] WordBookModel entry)
+    public async Task<IActionResult> CreateEntry([FromBody] AddEntryRequest entry)
     {
         var (word, err) = await wordBookService.AddWord(new WordBookModel(
             Id: string.Empty,
