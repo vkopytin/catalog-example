@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Models;
+using MongoDB.Driver;
 using Services;
 using Services.YoutubeApi;
 
@@ -23,21 +24,21 @@ var clientId = builder.Configuration["JWT:ClientId"] ?? throw new Exception("app
 var apiCorsPolicy = "ApiCorsPolicy";
 builder.Services.AddCors(options =>
 {
-  options.AddPolicy(name: apiCorsPolicy,
-  builder =>
-  {
-    builder.AllowCredentials()
-      .WithOrigins(
-        "http://local-dev.azurewebsites.net:4200", "http://localhost:4200", "http://dev.local:4200",
-        "https://local-dev.azurewebsites.net:4200", "https://localhost:4200", "https://dev.local:4200",
-        "https://local-dev.azurewebsites.net", "https://localhost", "https://dev.local",
-        "https://vko-idm.azurewebsites.net"
-      )
-      .AllowAnyHeader()
-      .AllowAnyMethod()
-      .WithExposedHeaders("Authorization")
-      ;
-  });
+    options.AddPolicy(name: apiCorsPolicy,
+    builder =>
+    {
+        builder.AllowCredentials()
+        .WithOrigins(
+          "http://local-dev.azurewebsites.net:4200", "http://localhost:4200", "http://dev.local:4200",
+          "https://local-dev.azurewebsites.net:4200", "https://localhost:4200", "https://dev.local:4200",
+          "https://local-dev.azurewebsites.net", "https://localhost", "https://dev.local",
+          "https://vko-idm.azurewebsites.net"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .WithExposedHeaders("Authorization")
+        ;
+    });
 });
 builder.Services.AddSingleton(p => p.GetRequiredService<IConfiguration>()
   .Get<MainSettings>() ?? throw new Exception("appsettings are missing")
@@ -49,11 +50,13 @@ builder.Services.AddSingleton(p => p.GetRequiredService<IConfiguration>().GetSec
   .Get<ImgBBConfig>() ?? new ImgBBConfig("", "")
 );
 var client = builder.Configuration.CreateMongoClient("MongoDBConnection");
+builder.Services.AddSingleton<MongoClient>(o => client);
 builder.Services.AddTransient(o =>
 {
-  return new MongoDbContext(client);
+    return new MongoDbContext(client);
 });
 builder.Services.AddSingleton<IDbConnectionFactory, NpgsqlDbConnectionFactory>();
+
 builder.Services.AddTransient<IProfileService, ProfileService>();
 builder.Services.AddTransient<IArticlesService, ArticlesService>();
 builder.Services.AddTransient<IArticleBlocksService, ArticleBlocksService>();
@@ -61,88 +64,90 @@ builder.Services.AddTransient<IWebSitesService, WebSitesService>();
 builder.Services.AddTransient<IMediaLibraryService, MediaLibraryService>();
 builder.Services.AddTransient<AuthorizationTokensService>();
 builder.Services.AddTransient<YoutubeApiService>();
+builder.Services.AddTransient<WordBookService>();
+
 builder.Services.AddHttpClient<IdmAccessTokenAuthSchemeHandler>();
 builder.Services.AddControllers();
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthorization(options =>
 {
-  var scopes = new[] {
+    var scopes = new[] {
     "read:user-info",
     "update:billing_settings",
     "read:customers",
     "read:files"
   };
 
-  Array.ForEach(scopes, scope =>
-    options.AddPolicy(scope,
-      policy => policy.Requirements.Add(
-        new ScopeRequirement(jwtIssuer, scope)
+    Array.ForEach(scopes, scope =>
+      options.AddPolicy(scope,
+        policy => policy.Requirements.Add(
+          new ScopeRequirement(jwtIssuer, scope)
+        )
       )
-    )
-  );
+    );
 })
 .AddAuthentication(config =>
 {
-  config.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-  config.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-  //config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-  //config.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    config.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    config.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+    //config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    //config.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
-  options.Events = new CookieAuthenticationEvents
-  {
-    // After the auth cookie has been validated, this event is called.
-    // In it we see if the access token is close to expiring.  If it is
-    // then we use the refresh token to get a new access token and save them.
-    // If the refresh token does not work for some reason then we redirect to
-    // the login screen.
-    OnValidatePrincipal = cookieCtx =>
+    options.Events = new CookieAuthenticationEvents
     {
-      Console.WriteLine(cookieCtx.Properties);
-      return Task.CompletedTask;
-    }
-  };
+        // After the auth cookie has been validated, this event is called.
+        // In it we see if the access token is close to expiring.  If it is
+        // then we use the refresh token to get a new access token and save them.
+        // If the refresh token does not work for some reason then we redirect to
+        // the login screen.
+        OnValidatePrincipal = cookieCtx =>
+        {
+            Console.WriteLine(cookieCtx.Properties);
+            return Task.CompletedTask;
+        }
+    };
 })
 .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
 {
-  // this is my Authorization Server Port
-  options.Authority = jwtIssuer;
-  options.ClientId = clientId;
-  options.ClientSecret = jwtSecretKey;
-  options.ResponseType = "code";
-  options.CallbackPath = "/signin-oidc";
-  options.SaveTokens = true;
-  options.UseSecurityTokenValidator = true;
-  options.MapInboundClaims = false;
-  options.TokenValidationParameters = new TokenValidationParameters
-  {
-    ValidateIssuer = false,
-    ValidateAudience = false,
-    SignatureValidator = delegate (string token, TokenValidationParameters validationParameters)
+    // this is my Authorization Server Port
+    options.Authority = jwtIssuer;
+    options.ClientId = clientId;
+    options.ClientSecret = jwtSecretKey;
+    options.ResponseType = "code";
+    options.CallbackPath = "/signin-oidc";
+    options.SaveTokens = true;
+    options.UseSecurityTokenValidator = true;
+    options.MapInboundClaims = false;
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-      var jwt = new JwtSecurityToken(token);
-      return jwt;
-    },
-  };
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        SignatureValidator = delegate (string token, TokenValidationParameters validationParameters)
+        {
+            var jwt = new JwtSecurityToken(token);
+            return jwt;
+        },
+    };
 })
 .AddJwtBearer(opt =>
 {
-  // for development only
-  opt.Audience = builder.Configuration["JWT:Audience"];
-  opt.RequireHttpsMetadata = false;
-  opt.SaveToken = true;
-  opt.MapInboundClaims = false;
-  opt.TokenValidationParameters = new TokenValidationParameters
-  {
-    //ValidAudience = builder.Configuration["JWT:Audience"],
-    ValidateAudience = false,
-    ValidateIssuer = true,
-    ValidIssuer = jwtIssuer,
-    ValidateIssuerSigningKey = true,
-    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecretKey)),
-  };
+    // for development only
+    opt.Audience = builder.Configuration["JWT:Audience"];
+    opt.RequireHttpsMetadata = false;
+    opt.SaveToken = true;
+    opt.MapInboundClaims = false;
+    opt.TokenValidationParameters = new TokenValidationParameters
+    {
+        //ValidAudience = builder.Configuration["JWT:Audience"],
+        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecretKey)),
+    };
 });
 
 builder.Services.AddHealthChecks();
