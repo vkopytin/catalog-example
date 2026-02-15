@@ -8,10 +8,11 @@ public static class WordBookExtentions
     public static WordBookModel ToModel(this WordBookRecord wordBook)
     {
         return new(
-          Id: wordBook.Id,
-          En: wordBook.En,
-          De: wordBook.De,
-          CreatedAt: wordBook.CreatedAt
+            Id: wordBook.Id,
+            En: wordBook.En,
+            De: wordBook.De,
+            CreatedAt: wordBook.CreatedAt,
+            UpdatedAt: wordBook.UpdatedAt
         );
     }
 }
