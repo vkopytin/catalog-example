@@ -18,7 +18,7 @@ public class WordBookService
         this.logger = logger;
     }
 
-    public async Task<(WordBookModel[]? words, ServiceError? err)> SearchWords(string search = "", int skip = 0, int limit = 20)
+    public async Task<(PagedResult<WordBookModel>? words, ServiceError? err)> SearchWords(string search = "", int skip = 0, int limit = 20)
     {
         await Task.Delay(1);
 
@@ -26,7 +26,8 @@ public class WordBookService
         {
             var words = dbContext.WordBooksSearch(search, skip, limit);
 
-            return (words.Select(w => w.ToModel()).ToArray(), null);
+            var items = words.Items.Select(w => w.ToModel()).ToArray();
+            return (new(items, words.Total), null);
         }
         catch (Exception ex)
         {

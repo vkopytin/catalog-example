@@ -94,7 +94,7 @@ public class MongoDbContext : DbContext
       );
     }
 
-    public IEnumerable<WordBookRecord> WordBooksSearch(string search, int skip = 0, int limit = 20)
+    public PagedResult<WordBookRecord> WordBooksSearch(string search, int skip = 0, int limit = 20)
     {
         var collection = this.Client.GetDatabase("main").GetCollection<WordBookRecord>("WordBooks");
         var filter = BsonDocument.Parse($@"{{
@@ -109,8 +109,9 @@ public class MongoDbContext : DbContext
         {
             query = query.Sort("{ CreatedAt: -1 }");
         }
+        var total = query.CountDocuments();
         var result = query.Skip(skip).Limit(limit).ToList();
 
-        return result;
+        return new(result, total);
     }
 }
