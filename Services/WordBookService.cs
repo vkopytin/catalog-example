@@ -36,6 +36,25 @@ public class WordBookService
         }
     }
 
+    public async Task<(WordBookModel? word, ServiceError? err)> getById(string id)
+    {
+        try
+        {
+            var record = await dbContext.WordBooks.FindAsync(id);
+            if (record is null)
+            {
+                return (null, new ServiceError($"No word with the id ({id}) was found"));
+            }
+
+            return (record.ToModel(), null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error, getting word by id");
+            return (null, new(Message: ex.Message));
+        }
+    }
+
     public async Task<(WordBookModel? word, ServiceError? err)> AddWord(WordBookModel word)
     {
         try
@@ -72,6 +91,8 @@ public class WordBookService
 
             record.En = entry.En;
             record.De = entry.De;
+            record.CreatedAt = entry.CreatedAt;
+            record.UpdatedAt = DateTime.UtcNow;
 
             dbContext.WordBooks.Update(record);
             await dbContext.SaveChangesAsync();
